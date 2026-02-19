@@ -1,26 +1,132 @@
 @import "tailwindcss";
 
+/* ─── Design Tokens ────────────────────────────────────────────────── */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Background layers */
+  --color-bg-base: #0d0d0f;
+  --color-bg-surface: #16181d;
+  --color-bg-elevated: #1e2028;
+  --color-bg-overlay: #252830;
+
+  /* Borders */
+  --color-border-subtle: #2a2d36;
+  --color-border-default: #3a3d4a;
+  --color-border-strong: #5a5d6a;
+
+  /* Text */
+  --color-text-primary: #e8eaf0;
+  --color-text-secondary: #8890a4;
+  --color-text-muted: #5a5f72;
+
+  /* Accent (brand indigo) */
+  --color-accent: #6366f1;
+  --color-accent-hover: #818cf8;
+  --color-accent-subtle: rgba(99, 102, 241, 0.12);
+
+  /* Semantic */
+  --color-success: #22c55e;
+  --color-success-subtle: rgba(34, 197, 94, 0.12);
+  --color-danger: #ef4444;
+  --color-danger-subtle: rgba(239, 68, 68, 0.12);
+  --color-warning: #f59e0b;
+  --color-info: #38bdf8;
+
+  /* Block node category colors */
+  --color-node-indicator: #818cf8;
+  --color-node-condition: #f59e0b;
+  --color-node-action-buy: #22c55e;
+  --color-node-action-sell: #ef4444;
+  --color-node-logic: #a78bfa;
+
+  /* Handle type colors */
+  --color-handle-numeric: #60a5fa;
+  --color-handle-boolean: #4ade80;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-background: var(--color-bg-base);
+  --color-foreground: var(--color-text-primary);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ─── Base ──────────────────────────────────────────────────────────── */
+html {
+  color-scheme: dark;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-bg-base);
+  color: var(--color-text-primary);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ─── Scrollbar ─────────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg-surface);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border-default);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-border-strong);
+}
+
+/* ─── ReactFlow overrides ───────────────────────────────────────────── */
+.react-flow__background {
+  background-color: var(--color-bg-base) !important;
+}
+
+.react-flow__controls {
+  background: var(--color-bg-elevated) !important;
+  border: 1px solid var(--color-border-subtle) !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+}
+
+.react-flow__controls-button {
+  background: transparent !important;
+  border-bottom: 1px solid var(--color-border-subtle) !important;
+  color: var(--color-text-secondary) !important;
+  fill: var(--color-text-secondary) !important;
+}
+
+.react-flow__controls-button:last-child {
+  border-bottom: none !important;
+}
+
+.react-flow__controls-button:hover {
+  background: var(--color-bg-overlay) !important;
+  color: var(--color-text-primary) !important;
+  fill: var(--color-text-primary) !important;
+}
+
+.react-flow__minimap {
+  background: var(--color-bg-elevated) !important;
+  border: 1px solid var(--color-border-subtle) !important;
+  border-radius: 8px !important;
+}
+
+.react-flow__edge-path {
+  stroke: var(--color-border-strong) !important;
+  stroke-width: 1.5 !important;
+}
+
+.react-flow__edge.selected .react-flow__edge-path,
+.react-flow__edge:hover .react-flow__edge-path {
+  stroke: var(--color-accent) !important;
+}
+
+.react-flow__connection-path {
+  stroke: var(--color-accent) !important;
+  stroke-width: 1.5 !important;
 }
