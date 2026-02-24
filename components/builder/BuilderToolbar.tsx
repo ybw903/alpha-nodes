@@ -1,114 +1,132 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useState, useRef, useEffect } from 'react';
 import { useBuilderStore } from '@/lib/store/builderStore';
-import { useBacktestStore } from '@/lib/store/backtestStore';
-import { useUIStore } from '@/lib/store/uiStore';
 import type { Strategy } from '@/types/strategy';
-import type { BacktestRequest } from '@/types/backtest';
 
-const DEFAULT_RUN_CONFIG = {
-  initialCapital: 10_000_000,
-  feeRatePct: 0.05,
-  slippagePct: 0.05,
-};
+const MAX_STRATEGIES = 5;
 
-function getTwoYearsAgo(): number {
-  const d = new Date();
-  d.setFullYear(d.getFullYear() - 2);
-  return d.getTime();
+function readSaved(): Strategy[] {
+  return JSON.parse(localStorage.getItem('strategies') || '[]') as Strategy[];
+}
+
+function writeSaved(list: Strategy[]): void {
+  localStorage.setItem('strategies', JSON.stringify(list));
 }
 
 export function BuilderToolbar() {
-  const router = useRouter();
-  const { nodes, edges, viewport, strategyName, setStrategyName } = useBuilderStore();
-  const { setResult, setIsRunning, setError } = useBacktestStore();
-  const { setRightPanelMode } = useUIStore();
+  const { nodes, edges, viewport, strategyName, setStrategyName, loadStrategy, clearCanvas } =
+    useBuilderStore();
+  const [loadOpen, setLoadOpen] = useState(false);
+  const [savedList, setSavedList] = useState<Strategy[]>([]);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // localStorage에 마지막으로 저장·불러온 이름 (input 직접 변경과 구분하기 위해 별도 관리)
+  const [persistedName, setPersistedName] = useState<string | null>(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setLoadOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
   const handleSave = () => {
+    const inputName = window.prompt('저장할 전략 이름을 입력하세요', strategyName);
+    if (inputName === null) return;
+    const trimmed = inputName.trim();
+    if (!trimmed) {
+      alert('전략 이름을 입력해주세요.');
+      return;
+    }
+
+    const saved = readSaved();
+    const existingIdx = saved.findIndex((s) => s.meta.name === trimmed);
+    // persistedName: 현재 캔버스가 저장된 이름 (input을 통한 변경은 반영 안 됨)
+    const oldIdx = persistedName ? saved.findIndex((s) => s.meta.name === persistedName) : -1;
+    const isRenaming = oldIdx >= 0 && trimmed !== persistedName;
+
+    // 새 항목 추가 시 저장 한도 확인 (이름 변경은 기존 항목이 제거되므로 제외)
+    if (existingIdx < 0 && !isRenaming && saved.length >= MAX_STRATEGIES) {
+      alert(`전략은 최대 ${MAX_STRATEGIES}개까지 저장할 수 있습니다.\n불러오기 메뉴에서 기존 전략을 삭제한 후 다시 시도해주세요.`);
+      return;
+    }
+
+    // 동일 이름 전략 덮어쓰기 확인 (자기 자신 제외)
+    if (existingIdx >= 0 && existingIdx !== oldIdx) {
+      const ok = window.confirm(`'${trimmed}' 전략이 이미 존재합니다. 덮어쓰시겠습니까?`);
+      if (!ok) return;
+    }
+
+    const now = new Date().toISOString();
+    const baseEntry = existingIdx >= 0 ? saved[existingIdx] : (isRenaming ? saved[oldIdx] : null);
     const strategy: Strategy = {
       meta: {
-        id: `strategy_${Date.now()}`,
-        name: strategyName,
-        assetClass: 'US_STOCK',
-        symbol: 'MOCK',
+        id: baseEntry?.meta.id ?? `strategy_${Date.now()}`,
+        name: trimmed,
+        assetClass: 'STOCK',
+        symbol: '',
         timeframe: '1d',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        createdAt: baseEntry?.meta.createdAt ?? now,
+        updatedAt: now,
       },
       nodes,
       edges,
       viewport,
     };
-    const saved = JSON.parse(localStorage.getItem('strategies') || '[]') as Strategy[];
-    const existing = saved.findIndex((s) => s.meta.name === strategyName);
-    if (existing >= 0) {
-      saved[existing] = strategy;
-    } else {
-      saved.push(strategy);
-    }
-    localStorage.setItem('strategies', JSON.stringify(saved));
+
+    // 덮어쓸 대상 제거 + 이름 변경 시 기존 항목 제거 후 새 항목 추가
+    const newSaved = saved.filter((s) => {
+      if (s.meta.name === trimmed) return false;
+      if (isRenaming && s.meta.name === persistedName) return false;
+      return true;
+    });
+    newSaved.push(strategy);
+
+    writeSaved(newSaved);
+    setStrategyName(trimmed);
+    setPersistedName(trimmed); // 저장 후 persistedName 갱신
     alert('전략이 저장되었습니다.');
   };
 
-  const handleRunBacktest = async () => {
-    if (nodes.length === 0) {
-      alert('캔버스에 블록을 추가해주세요.');
-      return;
-    }
-
-    const hasBuy = nodes.some((n) => n.data.blockType === 'BUY');
-    const hasSell = nodes.some((n) => n.data.blockType === 'SELL');
-    if (!hasBuy || !hasSell) {
-      alert('매수(BUY)와 매도(SELL) 블록이 모두 필요합니다.');
-      return;
-    }
-
-    const strategyId = `strategy_${Date.now()}`;
-    const strategy: Strategy = {
-      meta: {
-        id: strategyId,
-        name: strategyName,
-        assetClass: 'US_STOCK',
-        symbol: 'MOCK',
-        timeframe: '1d',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      },
-      nodes,
-      edges,
-      viewport,
-    };
-
-    const request: BacktestRequest = {
-      strategy,
-      ...DEFAULT_RUN_CONFIG,
-      from: getTwoYearsAgo(),
-      to: Date.now(),
-    };
-
-    setIsRunning(true);
-    setError(null);
-
-    try {
-      const res = await fetch('/api/backtest', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(request),
-      });
-      const json = await res.json();
-      if (!json.success) throw new Error(json.error);
-      setResult(json.data);
-      router.push(`/results/${strategyId}`);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : '백테스트 실행 중 오류가 발생했습니다.');
-      alert('백테스트 실패: ' + (err instanceof Error ? err.message : '알 수 없는 오류'));
-    } finally {
-      setIsRunning(false);
-    }
+  const handleOpenLoad = () => {
+    setSavedList(readSaved());
+    setLoadOpen((prev) => !prev);
   };
 
-  const { isRunning } = useBacktestStore();
+  const handleLoad = (strategy: Strategy) => {
+    loadStrategy(strategy.nodes, strategy.edges, strategy.meta.name);
+    setPersistedName(strategy.meta.name); // 불러온 전략의 이름을 persistedName으로 설정
+    setLoadOpen(false);
+  };
+
+  const handleDelete = (name: string) => {
+    const ok = window.confirm(`'${name}' 전략을 삭제하시겠습니까?`);
+    if (!ok) return;
+    const newSaved = readSaved().filter((s) => s.meta.name !== name);
+    writeSaved(newSaved);
+    setSavedList(newSaved);
+    // 현재 편집 중인 전략이 삭제된 경우 persistedName 초기화
+    if (name === persistedName) setPersistedName(null);
+  };
+
+  const handleNew = () => {
+    if (nodes.length > 0) {
+      const ok = window.confirm(
+        '현재 캔버스를 비우고 새 전략을 시작하시겠습니까?\n저장되지 않은 변경사항은 사라집니다.',
+      );
+      if (!ok) return;
+    }
+    clearCanvas();
+    setStrategyName('새 전략');
+    setPersistedName(null);
+  };
+
+  const atLimit = savedList.length >= MAX_STRATEGIES;
 
   return (
     <header className="h-13 flex items-center gap-3 px-4 border-b border-[var(--color-border-subtle)] bg-[var(--color-bg-surface)] shrink-0">
@@ -128,25 +146,80 @@ export function BuilderToolbar() {
 
       {/* Action buttons */}
       <button
-        onClick={() => setRightPanelMode('run')}
-        className="px-3 py-1.5 text-xs font-medium rounded-md border border-[var(--color-border-default)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:border-[var(--color-border-strong)] transition-colors"
+        onClick={handleNew}
+        className="px-3 py-1.5 text-xs font-medium rounded-md border border-(--color-border-default) text-(--color-text-secondary) hover:text-foreground hover:border-(--color-border-strong) transition-colors"
       >
-        실행 설정
+        새 전략
       </button>
+
+      <div ref={dropdownRef} className="relative">
+        <button
+          onClick={handleOpenLoad}
+          className="px-3 py-1.5 text-xs font-medium rounded-md border border-(--color-border-default) text-(--color-text-secondary) hover:text-foreground hover:border-(--color-border-strong) transition-colors"
+        >
+          불러오기
+        </button>
+
+        {loadOpen && (
+          <div className="absolute right-0 top-full mt-1 w-64 rounded-md border border-(--color-border-default) bg-(--color-bg-surface) shadow-xl z-50 overflow-hidden">
+            {savedList.length === 0 ? (
+              <p className="px-3 py-2.5 text-[11px] text-(--color-text-muted) text-center">
+                저장된 전략이 없습니다
+              </p>
+            ) : (
+              <ul>
+                {savedList.map((s) => (
+                  <li
+                    key={s.meta.id}
+                    className="flex items-center group border-b border-(--color-border-subtle) last:border-0"
+                  >
+                    <button
+                      type="button"
+                      onMouseDown={() => handleLoad(s)}
+                      className="flex-1 px-3 py-2 text-left text-xs text-foreground hover:bg-(--color-bg-elevated) transition-colors truncate"
+                    >
+                      {s.meta.name}
+                    </button>
+                    <button
+                      type="button"
+                      onMouseDown={(e) => {
+                        e.stopPropagation();
+                        handleDelete(s.meta.name);
+                      }}
+                      className="px-2.5 py-2 text-[13px] leading-none text-(--color-text-muted) hover:text-(--color-danger) transition-colors shrink-0 opacity-0 group-hover:opacity-100"
+                      title="삭제"
+                    >
+                      ×
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {/* 저장 한도 표시 */}
+            <div
+              className={`px-3 py-1.5 flex items-center justify-between border-t border-(--color-border-subtle) ${atLimit ? 'bg-(--color-danger)/10' : ''}`}
+            >
+              <span
+                className={`text-[10px] font-medium ${atLimit ? 'text-(--color-danger)' : 'text-(--color-text-muted)'}`}
+              >
+                {atLimit ? '저장 한도에 도달했습니다' : '저장된 전략'}
+              </span>
+              <span
+                className={`text-[10px] font-mono font-semibold ${atLimit ? 'text-(--color-danger)' : 'text-(--color-text-muted)'}`}
+              >
+                {savedList.length} / {MAX_STRATEGIES}
+              </span>
+            </div>
+          </div>
+        )}
+      </div>
 
       <button
         onClick={handleSave}
-        className="px-3 py-1.5 text-xs font-medium rounded-md border border-[var(--color-border-default)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:border-[var(--color-border-strong)] transition-colors"
+        className="px-3 py-1.5 text-xs font-medium rounded-md border border-(--color-border-default) text-(--color-text-secondary) hover:text-foreground hover:border-(--color-border-strong) transition-colors"
       >
         저장
-      </button>
-
-      <button
-        onClick={handleRunBacktest}
-        disabled={isRunning}
-        className="px-4 py-1.5 text-xs font-semibold rounded-md bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {isRunning ? '실행 중...' : '백테스트 실행'}
       </button>
     </header>
   );

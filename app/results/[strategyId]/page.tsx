@@ -1,22 +1,22 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
-import { useRouter, useParams } from 'next/navigation';
-import Link from 'next/link';
-import { useBacktestStore } from '@/lib/store/backtestStore';
-import { MetricsGrid } from '@/components/results/MetricsGrid';
-import { EquityChart } from '@/components/results/EquityChart';
-import { DrawdownChart } from '@/components/results/DrawdownChart';
-import { TradeTable } from '@/components/results/TradeTable';
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { useBacktestStore } from "@/lib/store/backtestStore";
+import { MetricsGrid } from "@/components/results/MetricsGrid";
+import { CandlestickChart } from "@/components/results/CandlestickChart";
+import { EquityChart } from "@/components/results/EquityChart";
+import { DrawdownChart } from "@/components/results/DrawdownChart";
+import { TradeTable } from "@/components/results/TradeTable";
 
 export default function ResultsPage() {
   const router = useRouter();
-  const params = useParams();
   const { result } = useBacktestStore();
 
   useEffect(() => {
     if (!result) {
-      router.replace('/builder');
+      router.replace("/builder");
     }
   }, [result, router]);
 
@@ -28,11 +28,11 @@ export default function ResultsPage() {
     );
   }
 
-  const { metrics, equityCurve, trades, request, warnings } = result;
+  const { metrics, equityCurve, bars, trades, request, warnings } = result;
   const strategyName = request.strategy.meta.name;
   const symbol = request.strategy.meta.symbol;
-  const fromDate = new Date(request.from).toLocaleDateString('ko-KR');
-  const toDate = new Date(request.to).toLocaleDateString('ko-KR');
+  const fromDate = new Date(request.from).toLocaleDateString("ko-KR");
+  const toDate = new Date(request.to).toLocaleDateString("ko-KR");
 
   return (
     <div className="min-h-screen bg-[var(--color-bg-base)]">
@@ -46,7 +46,9 @@ export default function ResultsPage() {
             BacktestApp
           </Link>
           <span className="text-[var(--color-border-default)]">/</span>
-          <span className="text-sm font-semibold text-[var(--color-text-primary)]">{strategyName}</span>
+          <span className="text-sm font-semibold text-[var(--color-text-primary)]">
+            {strategyName}
+          </span>
           <span className="text-xs text-[var(--color-text-muted)] ml-1">
             {symbol} · {fromDate} ~ {toDate}
           </span>
@@ -65,9 +67,13 @@ export default function ResultsPage() {
         {/* Warnings */}
         {warnings.length > 0 && (
           <div className="p-4 rounded-xl border border-[var(--color-warning)]/30 bg-[var(--color-warning)]/10">
-            <p className="text-xs font-semibold text-[var(--color-warning)] mb-1">경고</p>
+            <p className="text-xs font-semibold text-[var(--color-warning)] mb-1">
+              경고
+            </p>
             {warnings.map((w, i) => (
-              <p key={i} className="text-xs text-[var(--color-warning)]/80">{w}</p>
+              <p key={i} className="text-xs text-[var(--color-warning)]/80">
+                {w}
+              </p>
             ))}
           </div>
         )}
@@ -80,12 +86,27 @@ export default function ResultsPage() {
           <MetricsGrid metrics={metrics} />
         </section>
 
+        {/* Candlestick chart */}
+        <section className="space-y-4">
+          <h2 className="text-sm font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider">
+            가격 차트
+          </h2>
+          <CandlestickChart
+            bars={bars}
+            trades={trades}
+            nodes={request.strategy.nodes}
+          />
+        </section>
+
         {/* Charts */}
         <section className="space-y-4">
           <h2 className="text-sm font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider">
             수익 차트
           </h2>
-          <EquityChart equityCurve={equityCurve} initialCapital={request.initialCapital} />
+          <EquityChart
+            equityCurve={equityCurve}
+            initialCapital={request.initialCapital}
+          />
           <DrawdownChart equityCurve={equityCurve} />
         </section>
 

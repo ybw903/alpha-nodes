@@ -1,5 +1,6 @@
 import type { Strategy } from './strategy';
 import type { PerformanceMetrics } from './metrics';
+import type { OHLCVBar } from './market';
 
 export type TradeDirection = 'LONG';
 export type TradeStatus = 'OPEN' | 'CLOSED';
@@ -43,6 +44,7 @@ export interface BacktestResult {
   request: BacktestRequest;
   trades: Trade[];
   equityCurve: EquityDataPoint[];
+  bars: OHLCVBar[];
   metrics: PerformanceMetrics;
   warnings: string[];
 }

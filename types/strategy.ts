@@ -5,7 +5,7 @@ export type EdgeId = string;
 export type StrategyId = string;
 
 export type HandleDataType = "NUMERIC" | "BOOLEAN";
-export type AssetClass = "US_STOCK" | "KR_STOCK" | "CRYPTO";
+export type AssetClass = "STOCK" | "CRYPTO";
 export type Timeframe = "1d" | "1w" | "1m";
 export type PriceSource = "open" | "high" | "low" | "close" | "volume";
 export type MACDOutput = "macd" | "signal" | "histogram";

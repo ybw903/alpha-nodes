@@ -7,7 +7,35 @@ import {
   type NodeChange,
 } from "@xyflow/react";
 import { create } from "zustand";
-import type { BlockParams, StrategyEdge, StrategyNode } from "@/types/strategy";
+import type { AssetClass, BlockParams, StrategyEdge, StrategyNode, Timeframe } from "@/types/strategy";
+
+export interface RunConfig {
+  assetClass: AssetClass;
+  timeframe: Timeframe;
+  symbol: string;
+  from: string;
+  to: string;
+  initialCapital: number;
+  feeRatePct: number;
+  slippagePct: number;
+}
+
+function getDefaultDate(offsetYears: number): string {
+  const d = new Date();
+  d.setFullYear(d.getFullYear() + offsetYears);
+  return d.toISOString().split('T')[0];
+}
+
+const DEFAULT_RUN_CONFIG: RunConfig = {
+  assetClass: 'STOCK',
+  timeframe: '1d',
+  symbol: '',
+  from: getDefaultDate(-2),
+  to: getDefaultDate(0),
+  initialCapital: 10_000_000,
+  feeRatePct: 0.05,
+  slippagePct: 0.05,
+};
 
 let nodeIdCounter = 1;
 
@@ -21,6 +49,7 @@ interface BuilderState {
   viewport: { x: number; y: number; zoom: number };
   selectedNodeId: string | null;
   strategyName: string;
+  runConfig: RunConfig;
 
   // Actions
   setNodes: (nodes: StrategyNode[]) => void;
@@ -33,6 +62,7 @@ interface BuilderState {
   setSelectedNodeId: (id: string | null) => void;
   setViewport: (viewport: { x: number; y: number; zoom: number }) => void;
   setStrategyName: (name: string) => void;
+  patchRunConfig: (patch: Partial<RunConfig>) => void;
   clearCanvas: () => void;
   loadStrategy: (
     nodes: StrategyNode[],
@@ -47,6 +77,7 @@ export const useBuilderStore = create<BuilderState>((set) => ({
   viewport: { x: 0, y: 0, zoom: 1 },
   selectedNodeId: null,
   strategyName: "새 전략",
+  runConfig: DEFAULT_RUN_CONFIG,
 
   setNodes: (nodes) => set({ nodes }),
   setEdges: (edges) => set({ edges }),
@@ -89,6 +120,8 @@ export const useBuilderStore = create<BuilderState>((set) => ({
   setSelectedNodeId: (id) => set({ selectedNodeId: id }),
   setViewport: (viewport) => set({ viewport }),
   setStrategyName: (name) => set({ strategyName: name }),
+  patchRunConfig: (patch) =>
+    set((state) => ({ runConfig: { ...state.runConfig, ...patch } })),
   clearCanvas: () => set({ nodes: [], edges: [], selectedNodeId: null }),
 
   loadStrategy: (nodes, edges, name) =>

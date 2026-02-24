@@ -1,38 +1,73 @@
-import type { BacktestRequest, BacktestResult, Trade, EquityDataPoint } from '@/types/backtest';
-import type { OHLCVBar } from '@/types/market';
-import type { StrategyNode } from '@/types/strategy';
-import type { BuyParams, SellParams } from '@/types/strategy';
-import { generateMockOHLCV } from '@/lib/data/mockData';
-import { computeIndicator, type IndicatorSeries } from './indicators';
-import { evaluateStrategy } from './strategyEvaluator';
-import { computeMetrics } from './metrics';
+import type {
+  BacktestRequest,
+  BacktestResult,
+  Trade,
+  EquityDataPoint,
+} from "@/types/backtest";
+import type { OHLCVBar } from "@/types/market";
+import type { StrategyNode } from "@/types/strategy";
+import type { BuyParams, SellParams } from "@/types/strategy";
+import { fetchMarketData } from "@/lib/data/fetchers";
+import { computeIndicator, type IndicatorSeries } from "./indicators";
+import { evaluateStrategy } from "./strategyEvaluator";
+import { computeMetrics } from "./metrics";
 
-const INDICATOR_BLOCKS = new Set(['SMA','EMA','RSI','MACD','BOLLINGER','ATR','PRICE','VOLUME']);
+const INDICATOR_BLOCKS = new Set([
+  "SMA",
+  "EMA",
+  "RSI",
+  "MACD",
+  "BOLLINGER",
+  "ATR",
+  "PRICE",
+  "VOLUME",
+]);
 
 function getMaxPeriod(nodes: StrategyNode[]): number {
   let max = 0;
   for (const node of nodes) {
     const p = node.data.params as Record<string, unknown>;
-    for (const key of ['period', 'slowPeriod', 'fastPeriod', 'signalPeriod']) {
-      if (typeof p[key] === 'number') max = Math.max(max, p[key] as number);
+    for (const key of ["period", "slowPeriod", "fastPeriod", "signalPeriod"]) {
+      if (typeof p[key] === "number") max = Math.max(max, p[key] as number);
     }
   }
   return Math.max(max, 30); // minimum 30-bar warmup
 }
 
-export async function runBacktest(request: BacktestRequest): Promise<BacktestResult> {
-  const { strategy, initialCapital, feeRatePct, slippagePct, from, to } = request;
+export async function runBacktest(
+  request: BacktestRequest
+): Promise<BacktestResult> {
+  const { strategy, initialCapital, feeRatePct, slippagePct, from, to } =
+    request;
   const { nodes, edges } = strategy;
 
   const warnings: string[] = [];
 
-  // 1. Fetch (mock) data with warmup buffer
+  // 1. Fetch real market data with warmup buffer
   const warmup = getMaxPeriod(nodes);
-  const warmupMs = warmup * 86_400_000 * 1.5; // extra buffer for weekends
-  const bars: OHLCVBar[] = generateMockOHLCV(from - warmupMs, to);
+  const TIMEFRAME_MS: Record<string, number> = {
+    "1d": 86_400_000,
+    "1w": 7 * 86_400_000,
+    "1m": 30 * 86_400_000,
+  };
+  const warmupMs =
+    warmup * (TIMEFRAME_MS[strategy.meta.timeframe] ?? 86_400_000) * 1.5;
 
+  const bars: OHLCVBar[] = await fetchMarketData({
+    symbol: strategy.meta.symbol,
+    assetClass: strategy.meta.assetClass,
+    timeframe: strategy.meta.timeframe,
+    from: from - warmupMs,
+    to,
+  });
+
+  if (bars.length === 0) {
+    throw new Error(
+      "시장 데이터를 가져올 수 없습니다. 심볼과 날짜 범위를 확인해주세요."
+    );
+  }
   if (bars.length < warmup + 10) {
-    throw new Error('데이터가 부족합니다. 더 긴 기간을 선택해주세요.');
+    throw new Error("데이터가 부족합니다. 더 긴 기간을 선택해주세요.");
   }
 
   // 2. Compute indicator series for all indicator nodes
@@ -42,8 +77,15 @@ export async function runBacktest(request: BacktestRequest): Promise<BacktestRes
       try {
         indicatorMap.set(node.id, computeIndicator(node, bars));
       } catch (err) {
-        warnings.push(`[${node.data.label}] 계산 실패: ${err instanceof Error ? err.message : '알 수 없는 오류'}`);
-        indicatorMap.set(node.id, bars.map(() => null));
+        warnings.push(
+          `[${node.data.label}] 계산 실패: ${
+            err instanceof Error ? err.message : "알 수 없는 오류"
+          }`
+        );
+        indicatorMap.set(
+          node.id,
+          bars.map(() => null)
+        );
       }
     }
   }
@@ -59,7 +101,7 @@ export async function runBacktest(request: BacktestRequest): Promise<BacktestRes
   const equityCurve: EquityDataPoint[] = [];
 
   const startPrice = bars[0].close;
-  let benchmarkShares = initialCapital / startPrice;
+  const benchmarkShares = initialCapital / startPrice;
 
   // Track peak for drawdown
   let peak = initialCapital;
@@ -77,19 +119,20 @@ export async function runBacktest(request: BacktestRequest): Promise<BacktestRes
 
     // Check stop-loss / take-profit on open trade
     if (openTrade) {
-      const sellNode = nodes.find((n) => n.data.blockType === 'SELL');
+      const sellNode = nodes.find((n) => n.data.blockType === "SELL");
       const sellParams = sellNode?.data.params as SellParams | undefined;
 
-      const currentPnlPct = ((bar.close - openTrade.entryPrice) / openTrade.entryPrice) * 100;
+      const currentPnlPct =
+        ((bar.close - openTrade.entryPrice) / openTrade.entryPrice) * 100;
 
-      const stopLossHit = sellParams?.stopLossPct
-        && currentPnlPct <= -(sellParams.stopLossPct);
-      const takeProfitHit = sellParams?.takeProfitPct
-        && currentPnlPct >= sellParams.takeProfitPct;
+      const stopLossHit =
+        sellParams?.stopLossPct && currentPnlPct <= -sellParams.stopLossPct;
+      const takeProfitHit =
+        sellParams?.takeProfitPct && currentPnlPct >= sellParams.takeProfitPct;
 
       if (stopLossHit || takeProfitHit) {
         const exitPrice = bar.low * (1 - slippagePct / 100); // conservative exit on SL
-        const exitReason = stopLossHit ? 'STOP_LOSS' : 'TAKE_PROFIT';
+        const exitReason = stopLossHit ? "STOP_LOSS" : "TAKE_PROFIT";
         closeTrade(openTrade, exitPrice, bar.timestamp, exitReason);
         openTrade = null;
       }
@@ -100,7 +143,7 @@ export async function runBacktest(request: BacktestRequest): Promise<BacktestRes
     const exitPrice = bar.close * (1 - slippagePct / 100);
 
     if (signal.buy && !openTrade) {
-      const buyNode = nodes.find((n) => n.data.blockType === 'BUY');
+      const buyNode = nodes.find((n) => n.data.blockType === "BUY");
       const buyParams = buyNode?.data.params as BuyParams | undefined;
       const sizePct = buyParams?.positionSizePct ?? 100;
       const tradeCapital = capital * (sizePct / 100);
@@ -113,25 +156,28 @@ export async function runBacktest(request: BacktestRequest): Promise<BacktestRes
 
       openTrade = {
         id: `trade_${trades.length + 1}`,
-        direction: 'LONG',
+        direction: "LONG",
         entryTimestamp: bar.timestamp,
         entryPrice,
         positionSizePct: sizePct,
         shares,
         entryCapital: tradeCapital,
-        status: 'OPEN',
+        status: "OPEN",
       };
       trades.push(openTrade);
     }
 
     if (signal.sell && openTrade) {
-      closeTrade(openTrade, exitPrice, bar.timestamp, 'SIGNAL');
+      closeTrade(openTrade, exitPrice, bar.timestamp, "SIGNAL");
       openTrade = null;
     }
 
     // Calculate current equity
-    const unrealized = openTrade ? openTrade.shares * bar.close - openTrade.entryCapital : 0;
-    const equity = capital + (openTrade ? openTrade.entryCapital + unrealized : 0);
+    const unrealized = openTrade
+      ? openTrade.shares * bar.close - openTrade.entryCapital
+      : 0;
+    const equity =
+      capital + (openTrade ? openTrade.entryCapital + unrealized : 0);
 
     peak = Math.max(peak, equity);
     const drawdown = peak > 0 ? (equity - peak) / peak : 0;
@@ -142,14 +188,14 @@ export async function runBacktest(request: BacktestRequest): Promise<BacktestRes
   // Close any open trade at end of data
   if (openTrade && bars.length > 0) {
     const lastBar = bars[bars.length - 1];
-    closeTrade(openTrade, lastBar.close, lastBar.timestamp, 'END_OF_DATA');
+    closeTrade(openTrade, lastBar.close, lastBar.timestamp, "END_OF_DATA");
   }
 
   function closeTrade(
     trade: Trade,
     exitPrice: number,
     exitTimestamp: number,
-    exitReason: Trade['exitReason']
+    exitReason: Trade["exitReason"]
   ) {
     const exitValue = trade.shares * exitPrice;
     const fee = exitValue * (feeRatePct / 100);
@@ -160,13 +206,18 @@ export async function runBacktest(request: BacktestRequest): Promise<BacktestRes
     trade.exitPrice = exitPrice;
     trade.exitTimestamp = exitTimestamp;
     trade.exitReason = exitReason;
-    trade.status = 'CLOSED';
+    trade.status = "CLOSED";
     trade.pnl = proceeds - trade.entryCapital;
     trade.pnlPct = (trade.pnl / trade.entryCapital) * 100;
   }
 
   // 5. Compute metrics
-  const metrics = computeMetrics(trades, equityCurve, initialCapital, totalFees);
+  const metrics = computeMetrics(
+    trades,
+    equityCurve,
+    initialCapital,
+    totalFees
+  );
 
   return {
     strategyId: strategy.meta.id,
@@ -174,6 +225,7 @@ export async function runBacktest(request: BacktestRequest): Promise<BacktestRes
     request,
     trades,
     equityCurve,
+    bars: bars.filter((b) => b.timestamp >= from),
     metrics,
     warnings,
   };

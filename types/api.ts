@@ -12,3 +12,10 @@ export interface ApiError {
 }
 
 export type ApiResponse<T> = ApiSuccess<T> | ApiError;
+
+export interface AssetSearchResult {
+  symbol: string;
+  name: string;
+  exchDisp: string;
+  typeDisp: string;
+}
