@@ -50,7 +50,7 @@ This is a **노코드 백테스팅 웹서비스** built with Next.js App Router,
 
 **백테스팅 엔진**
 - `lib/backtest/engine.ts` — 메인 백테스팅 루프 (서버사이드, API Route에서 호출)
-- `lib/backtest/strategyEvaluator.ts` — 그래프 순회 → BUY/SELL 시그널 생성
+- `lib/backtest/strategyEvaluator.ts` — 그래프 순회 → BUY/SELL 시그널 생성 (allBarCache로 크로스바 캐싱)
 - `lib/backtest/indicators.ts` — technicalindicators 래퍼
 - `lib/backtest/metrics.ts` — MDD, Sharpe, 승률 등 성과 지표 계산
 
@@ -73,7 +73,7 @@ This is a **노코드 백테스팅 웹서비스** built with Next.js App Router,
 **빌더 컴포넌트**
 - `components/builder/BuilderToolbar.tsx` — 상단 툴바 (새 전략, 불러오기, 저장)
 - `components/builder/BuilderCanvas.tsx` — ReactFlow 캔버스
-- `components/builder/BuilderSidebar.tsx` — 블록 팔레트
+- `components/builder/BuilderSidebar.tsx` — 블록 팔레트 (LOOKBACK/CONSECUTIVE/NOT 포함)
 - `components/builder/AssetSearch.tsx` — 종목 검색 자동완성 (300ms 디바운스)
 - `components/builder/panels/RunPanel.tsx` — 자산·기간·자본 설정 + 백테스트 실행
 - `components/builder/panels/NodeConfigPanel.tsx` — 선택된 노드 파라미터 편집
@@ -116,6 +116,14 @@ text-foreground // --color-foreground
 - `StrategyNode = Node<StrategyNodeData>` — ReactFlow Node 타입 직접 사용
 - ReactFlow 이벤트 핸들러: `OnNodeClick` 없음 → `NodeMouseHandler` 사용
 - API 응답 봉투 형식: `{ success: boolean; data: T; timestamp: string }`
+
+### 블록 타입 및 핸들 타입
+
+- `LOOKBACK` → indicator 카테고리 (NUMERIC 입/출력, N봉 전 값 반환)
+- `CONSECUTIVE` → condition 카테고리 (BOOLEAN 입/출력, N봉 연속 조건)
+- `NOT` → logic 카테고리 (BOOLEAN 입/출력, 부정 반전)
+- SELL 노드 추가 파라미터: `trailingStopPct` (고점 대비 N% 하락 청산), `exitAfterBars` (N봉 후 자동 청산)
+- `strategyEvaluator.ts`: `allBarCache: Map<nodeId:barIndex, value>` — 전체 루프 유지, CONSECUTIVE/LOOKBACK에 필수
 
 ### 라이브러리 주의사항
 

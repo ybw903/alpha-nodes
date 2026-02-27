@@ -31,8 +31,11 @@ export type BlockType =
   | "THRESHOLD"
   | "AND"
   | "OR"
+  | "NOT"
   | "BUY"
-  | "SELL";
+  | "SELL"
+  | "CONSECUTIVE"
+  | "LOOKBACK";
 
 // ─── Block params ─────────────────────────────────────────────────────
 export interface SMAParams {
@@ -80,6 +83,13 @@ export interface ThresholdParams {
 }
 export type AndParams = Record<string, never>;
 export type OrParams = Record<string, never>;
+export type NotParams = Record<string, never>;
+export interface ConsecutiveParams {
+  count: number; // 연속 봉 수 (기본값 3)
+}
+export interface LookbackParams {
+  period: number; // N봉 전 (기본값 1)
+}
 
 export interface BuyParams {
   positionSizePct: number;
@@ -88,6 +98,8 @@ export interface SellParams {
   positionSizePct: number;
   stopLossPct?: number;
   takeProfitPct?: number;
+  trailingStopPct?: number;  // 고점 대비 N% 하락 시 청산
+  exitAfterBars?: number;    // 진입 후 N봉 경과 시 자동 청산
 }
 
 export type BlockParams =
@@ -104,6 +116,9 @@ export type BlockParams =
   | ThresholdParams
   | AndParams
   | OrParams
+  | NotParams
+  | ConsecutiveParams
+  | LookbackParams
   | BuyParams
   | SellParams;
 

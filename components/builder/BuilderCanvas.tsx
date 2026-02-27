@@ -33,6 +33,7 @@ const INDICATOR_TYPES = new Set([
   "ATR",
   "PRICE",
   "VOLUME",
+  "LOOKBACK",
 ]);
 const CONDITION_TYPES = new Set([
   "COMPARE",
@@ -41,13 +42,15 @@ const CONDITION_TYPES = new Set([
   "THRESHOLD",
   "AND",
   "OR",
+  "NOT",
+  "CONSECUTIVE",
 ]);
 const ACTION_TYPES = new Set(["BUY", "SELL"]);
 
 function getNodeCategory(blockType: BlockType): BlockCategory {
   if (INDICATOR_TYPES.has(blockType)) return "indicator";
   if (CONDITION_TYPES.has(blockType)) {
-    if (blockType === "AND" || blockType === "OR") return "logic";
+    if (blockType === "AND" || blockType === "OR" || blockType === "NOT") return "logic";
     return "condition";
   }
   if (ACTION_TYPES.has(blockType)) return "action";

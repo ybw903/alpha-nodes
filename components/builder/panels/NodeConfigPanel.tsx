@@ -54,11 +54,16 @@ const FIELDS_BY_BLOCK: Record<BlockType, FieldDef[]> = {
   ],
   AND: [],
   OR: [],
+  NOT: [],
+  CONSECUTIVE: [{ key: 'count', label: '연속 봉 수', type: 'number', min: 2 }],
+  LOOKBACK: [{ key: 'period', label: 'N봉 전', type: 'number', min: 1 }],
   BUY: [{ key: 'positionSizePct', label: '포지션 크기 (%)', type: 'number', min: 1 }],
   SELL: [
     { key: 'positionSizePct', label: '포지션 크기 (%)', type: 'number', min: 1 },
     { key: 'stopLossPct', label: '손절 (%)', type: 'number', min: 0 },
     { key: 'takeProfitPct', label: '익절 (%)', type: 'number', min: 0 },
+    { key: 'trailingStopPct', label: '트레일링 스탑 (%)', type: 'number', min: 0 },
+    { key: 'exitAfterBars', label: 'N봉 후 자동 청산', type: 'number', min: 1 },
   ],
 };
 

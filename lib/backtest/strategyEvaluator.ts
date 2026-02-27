@@ -1,4 +1,12 @@
-import type { StrategyNode, StrategyEdge, BlockType, CompareParams, ThresholdParams } from '@/types/strategy';
+import type {
+  StrategyNode,
+  StrategyEdge,
+  BlockType,
+  CompareParams,
+  ThresholdParams,
+  ConsecutiveParams,
+  LookbackParams,
+} from '@/types/strategy';
 import type { IndicatorSeries } from './indicators';
 
 export interface BarSignals {
@@ -51,7 +59,8 @@ export function topologicalSort(nodes: StrategyNode[], edges: StrategyEdge[]): N
 
 /**
  * Evaluates conditions and actions for each bar index.
- * Returns an array of BarSignals (buy/sell).
+ * Uses a persistent cross-bar cache (allBarCache) keyed by `nodeId:barIndex`
+ * to support CONSECUTIVE (N-bar lookback) and LOOKBACK (N bars ago) blocks.
  */
 export function evaluateStrategy(
   nodes: StrategyNode[],
@@ -63,142 +72,174 @@ export function evaluateStrategy(
 
   const nodeMap = new Map(nodes.map((n) => [n.id, n]));
 
-  // Build input edge map: targetId -> list of { source, sourceHandle, targetHandle }
+  // Build input edge map: targetId -> list of edges
   const inputEdges = new Map<NodeId, StrategyEdge[]>();
   for (const edge of edges) {
     if (!inputEdges.has(edge.target)) inputEdges.set(edge.target, []);
     inputEdges.get(edge.target)!.push(edge);
   }
 
-  // For each bar, resolve node values
-  for (let i = 0; i < barCount; i++) {
-    // Cache resolved values for this bar
-    const resolved = new Map<NodeId, number | boolean | null>();
+  // Cross-bar cache: key = `nodeId:barIndex`
+  // Persists across bar iterations to enable CONSECUTIVE and LOOKBACK
+  const allBarCache = new Map<string, number | boolean | null>();
 
-    function resolveNode(nodeId: NodeId): number | boolean | null {
-      if (resolved.has(nodeId)) return resolved.get(nodeId)!;
+  function resolveAtBar(nodeId: NodeId, barIdx: number): number | boolean | null {
+    if (barIdx < 0) return null;
 
-      const node = nodeMap.get(nodeId);
-      if (!node) return null;
+    const cacheKey = `${nodeId}:${barIdx}`;
+    if (allBarCache.has(cacheKey)) return allBarCache.get(cacheKey)!;
 
-      const blockType: BlockType = node.data.blockType;
+    const node = nodeMap.get(nodeId);
+    if (!node) return null;
 
-      // Indicator nodes: value comes from pre-computed series
-      if (['SMA','EMA','RSI','MACD','BOLLINGER','ATR','PRICE','VOLUME'].includes(blockType)) {
-        const series = indicatorMap.get(nodeId);
-        const val = series ? (series[i] ?? null) : null;
-        resolved.set(nodeId, val);
-        return val;
-      }
+    const blockType: BlockType = node.data.blockType;
 
-      // Get incoming edges for this node
-      const incoming = inputEdges.get(nodeId) ?? [];
-
-      function getInputByHandle(handle: string): number | boolean | null {
-        const edge = incoming.find((e) => e.targetHandle === handle);
-        if (!edge) return null;
-        return resolveNode(edge.source);
-      }
-
-      function getInputByIndex(idx: number): number | boolean | null {
-        const edge = incoming[idx];
-        if (!edge) return null;
-        return resolveNode(edge.source);
-      }
-
-      let value: number | boolean | null = null;
-
-      switch (blockType) {
-        case 'COMPARE': {
-          const p = node.data.params as CompareParams;
-          const a = (getInputByHandle('a') ?? getInputByIndex(0)) as number | null;
-          const b = (getInputByHandle('b') ?? getInputByIndex(1)) as number | null;
-          if (a === null || b === null) { value = null; break; }
-          switch (p.operator) {
-            case '>':  value = a > b; break;
-            case '<':  value = a < b; break;
-            case '>=': value = a >= b; break;
-            case '<=': value = a <= b; break;
-            case '==': value = Math.abs(a - b) < 1e-9; break;
-            default:   value = false;
-          }
-          break;
-        }
-        case 'CROSSOVER': {
-          if (i === 0) { value = false; break; }
-          const aCur = getInputByHandle('a') as number | null;
-          const bCur = getInputByHandle('b') as number | null;
-          // resolve prev bar values manually
-          const aPrevSeries = incoming.find((e) => e.targetHandle === 'a');
-          const bPrevSeries = incoming.find((e) => e.targetHandle === 'b');
-          const aPrev = aPrevSeries ? (indicatorMap.get(aPrevSeries.source)?.[i - 1] ?? null) : null;
-          const bPrev = bPrevSeries ? (indicatorMap.get(bPrevSeries.source)?.[i - 1] ?? null) : null;
-          if (aCur === null || bCur === null || aPrev === null || bPrev === null) { value = false; break; }
-          value = (aPrev as number) <= (bPrev as number) && (aCur as number) > (bCur as number);
-          break;
-        }
-        case 'CROSSUNDER': {
-          if (i === 0) { value = false; break; }
-          const aCur = getInputByHandle('a') as number | null;
-          const bCur = getInputByHandle('b') as number | null;
-          const aPrevSeries = incoming.find((e) => e.targetHandle === 'a');
-          const bPrevSeries = incoming.find((e) => e.targetHandle === 'b');
-          const aPrev = aPrevSeries ? (indicatorMap.get(aPrevSeries.source)?.[i - 1] ?? null) : null;
-          const bPrev = bPrevSeries ? (indicatorMap.get(bPrevSeries.source)?.[i - 1] ?? null) : null;
-          if (aCur === null || bCur === null || aPrev === null || bPrev === null) { value = false; break; }
-          value = (aPrev as number) >= (bPrev as number) && (aCur as number) < (bCur as number);
-          break;
-        }
-        case 'THRESHOLD': {
-          const p = node.data.params as ThresholdParams;
-          const v = (getInputByHandle('value') ?? getInputByIndex(0)) as number | null;
-          if (v === null) { value = null; break; }
-          switch (p.operator) {
-            case '>':  value = v > p.value; break;
-            case '<':  value = v < p.value; break;
-            case '>=': value = v >= p.value; break;
-            case '<=': value = v <= p.value; break;
-            case '==': value = Math.abs(v - p.value) < 1e-9; break;
-            default:   value = false;
-          }
-          break;
-        }
-        case 'AND': {
-          const a = (getInputByHandle('a') ?? getInputByIndex(0)) as boolean | null;
-          const b = (getInputByHandle('b') ?? getInputByIndex(1)) as boolean | null;
-          value = !!a && !!b;
-          break;
-        }
-        case 'OR': {
-          const a = (getInputByHandle('a') ?? getInputByIndex(0)) as boolean | null;
-          const b = (getInputByHandle('b') ?? getInputByIndex(1)) as boolean | null;
-          value = !!a || !!b;
-          break;
-        }
-        case 'BUY': {
-          const sig = (getInputByHandle('signal') ?? getInputByIndex(0)) as boolean | null;
-          if (sig) signals[i].buy = true;
-          value = sig ?? false;
-          break;
-        }
-        case 'SELL': {
-          const sig = (getInputByHandle('signal') ?? getInputByIndex(0)) as boolean | null;
-          if (sig) signals[i].sell = true;
-          value = sig ?? false;
-          break;
-        }
-        default:
-          value = null;
-      }
-
-      resolved.set(nodeId, value);
-      return value;
+    // Indicator nodes: value comes from pre-computed series
+    if (['SMA', 'EMA', 'RSI', 'MACD', 'BOLLINGER', 'ATR', 'PRICE', 'VOLUME'].includes(blockType)) {
+      const series = indicatorMap.get(nodeId);
+      const val = series ? (series[barIdx] ?? null) : null;
+      allBarCache.set(cacheKey, val);
+      return val;
     }
 
-    // Resolve all action nodes (they set signals as side effect)
+    const incoming = inputEdges.get(nodeId) ?? [];
+
+    function getInputByHandle(handle: string): number | boolean | null {
+      const edge = incoming.find((e) => e.targetHandle === handle);
+      if (!edge) return null;
+      return resolveAtBar(edge.source, barIdx);
+    }
+
+    function getInputByIndex(idx: number): number | boolean | null {
+      const edge = incoming[idx];
+      if (!edge) return null;
+      return resolveAtBar(edge.source, barIdx);
+    }
+
+    let value: number | boolean | null = null;
+
+    switch (blockType) {
+      case 'COMPARE': {
+        const p = node.data.params as CompareParams;
+        const a = (getInputByHandle('a') ?? getInputByIndex(0)) as number | null;
+        const b = (getInputByHandle('b') ?? getInputByIndex(1)) as number | null;
+        if (a === null || b === null) { value = null; break; }
+        switch (p.operator) {
+          case '>':  value = a > b; break;
+          case '<':  value = a < b; break;
+          case '>=': value = a >= b; break;
+          case '<=': value = a <= b; break;
+          case '==': value = Math.abs(a - b) < 1e-9; break;
+          default:   value = false;
+        }
+        break;
+      }
+      case 'CROSSOVER': {
+        if (barIdx === 0) { value = false; break; }
+        const aCur = getInputByHandle('a') as number | null;
+        const bCur = getInputByHandle('b') as number | null;
+        const aEdge = incoming.find((e) => e.targetHandle === 'a');
+        const bEdge = incoming.find((e) => e.targetHandle === 'b');
+        const aPrev = aEdge ? resolveAtBar(aEdge.source, barIdx - 1) as number | null : null;
+        const bPrev = bEdge ? resolveAtBar(bEdge.source, barIdx - 1) as number | null : null;
+        if (aCur === null || bCur === null || aPrev === null || bPrev === null) { value = false; break; }
+        value = aPrev <= bPrev && aCur > bCur;
+        break;
+      }
+      case 'CROSSUNDER': {
+        if (barIdx === 0) { value = false; break; }
+        const aCur = getInputByHandle('a') as number | null;
+        const bCur = getInputByHandle('b') as number | null;
+        const aEdge = incoming.find((e) => e.targetHandle === 'a');
+        const bEdge = incoming.find((e) => e.targetHandle === 'b');
+        const aPrev = aEdge ? resolveAtBar(aEdge.source, barIdx - 1) as number | null : null;
+        const bPrev = bEdge ? resolveAtBar(bEdge.source, barIdx - 1) as number | null : null;
+        if (aCur === null || bCur === null || aPrev === null || bPrev === null) { value = false; break; }
+        value = aPrev >= bPrev && aCur < bCur;
+        break;
+      }
+      case 'THRESHOLD': {
+        const p = node.data.params as ThresholdParams;
+        const v = (getInputByHandle('value') ?? getInputByIndex(0)) as number | null;
+        if (v === null) { value = null; break; }
+        switch (p.operator) {
+          case '>':  value = v > p.value; break;
+          case '<':  value = v < p.value; break;
+          case '>=': value = v >= p.value; break;
+          case '<=': value = v <= p.value; break;
+          case '==': value = Math.abs(v - p.value) < 1e-9; break;
+          default:   value = false;
+        }
+        break;
+      }
+      case 'AND': {
+        const a = (getInputByHandle('a') ?? getInputByIndex(0)) as boolean | null;
+        const b = (getInputByHandle('b') ?? getInputByIndex(1)) as boolean | null;
+        value = !!a && !!b;
+        break;
+      }
+      case 'OR': {
+        const a = (getInputByHandle('a') ?? getInputByIndex(0)) as boolean | null;
+        const b = (getInputByHandle('b') ?? getInputByIndex(1)) as boolean | null;
+        value = !!a || !!b;
+        break;
+      }
+      case 'NOT': {
+        // Boolean negation: NOT(true) = false, NOT(false) = true, NOT(null) = null
+        const a = (getInputByHandle('a') ?? getInputByIndex(0)) as boolean | null;
+        value = a !== null ? !a : null;
+        break;
+      }
+      case 'CONSECUTIVE': {
+        // Returns true if the input was true for `count` consecutive bars ending at barIdx
+        const p = node.data.params as ConsecutiveParams;
+        const count = Math.max(1, p?.count ?? 3);
+        const inputEdge = (inputEdges.get(nodeId) ?? [])[0];
+        if (!inputEdge) { value = false; break; }
+        let allTrue = true;
+        for (let j = barIdx - count + 1; j <= barIdx; j++) {
+          if (!resolveAtBar(inputEdge.source, j)) {
+            allTrue = false;
+            break;
+          }
+        }
+        value = allTrue;
+        break;
+      }
+      case 'LOOKBACK': {
+        // Returns the input node's value from `period` bars ago
+        const p = node.data.params as LookbackParams;
+        const period = Math.max(1, p?.period ?? 1);
+        const inputEdge = (inputEdges.get(nodeId) ?? [])[0];
+        if (!inputEdge) { value = null; break; }
+        value = resolveAtBar(inputEdge.source, barIdx - period);
+        break;
+      }
+      case 'BUY': {
+        const sig = (getInputByHandle('signal') ?? getInputByIndex(0)) as boolean | null;
+        if (sig) signals[barIdx].buy = true;
+        value = sig ?? false;
+        break;
+      }
+      case 'SELL': {
+        const sig = (getInputByHandle('signal') ?? getInputByIndex(0)) as boolean | null;
+        if (sig) signals[barIdx].sell = true;
+        value = sig ?? false;
+        break;
+      }
+      default:
+        value = null;
+    }
+
+    allBarCache.set(cacheKey, value);
+    return value;
+  }
+
+  // Resolve all action nodes for each bar (they set signals as side effect)
+  for (let i = 0; i < barCount; i++) {
     for (const node of nodes) {
       if (node.data.blockType === 'BUY' || node.data.blockType === 'SELL') {
-        resolveNode(node.id);
+        resolveAtBar(node.id, i);
       }
     }
   }

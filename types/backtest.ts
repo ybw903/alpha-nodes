@@ -4,7 +4,7 @@ import type { OHLCVBar } from './market';
 
 export type TradeDirection = 'LONG';
 export type TradeStatus = 'OPEN' | 'CLOSED';
-export type ExitReason = 'SIGNAL' | 'STOP_LOSS' | 'TAKE_PROFIT' | 'END_OF_DATA';
+export type ExitReason = 'SIGNAL' | 'STOP_LOSS' | 'TAKE_PROFIT' | 'TRAILING_STOP' | 'TIME_EXIT' | 'END_OF_DATA';
 
 export interface Trade {
   id: string;
@@ -20,6 +20,8 @@ export interface Trade {
   pnlPct?: number;
   status: TradeStatus;
   exitReason?: ExitReason;
+  highWatermark?: number;   // 트레일링 스탑용 고점 추적
+  entryBarIndex?: number;   // 시간 기반 청산용 진입 봉 인덱스
 }
 
 export interface EquityDataPoint {

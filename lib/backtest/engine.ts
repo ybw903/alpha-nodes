@@ -117,10 +117,16 @@ export async function runBacktest(
 
     const benchmark = benchmarkShares * bar.close;
 
-    // Check stop-loss / take-profit on open trade
+    // Check stop-loss / take-profit / trailing stop / time exit on open trade
     if (openTrade) {
       const sellNode = nodes.find((n) => n.data.blockType === "SELL");
       const sellParams = sellNode?.data.params as SellParams | undefined;
+
+      // Update high watermark for trailing stop
+      openTrade.highWatermark = Math.max(
+        openTrade.highWatermark ?? openTrade.entryPrice,
+        bar.close
+      );
 
       const currentPnlPct =
         ((bar.close - openTrade.entryPrice) / openTrade.entryPrice) * 100;
@@ -129,10 +135,25 @@ export async function runBacktest(
         sellParams?.stopLossPct && currentPnlPct <= -sellParams.stopLossPct;
       const takeProfitHit =
         sellParams?.takeProfitPct && currentPnlPct >= sellParams.takeProfitPct;
+      const trailingStopHit =
+        sellParams?.trailingStopPct &&
+        bar.close <
+          (openTrade.highWatermark) * (1 - sellParams.trailingStopPct / 100);
+      const timeExitHit =
+        sellParams?.exitAfterBars &&
+        i - (openTrade.entryBarIndex ?? i) >= sellParams.exitAfterBars;
 
-      if (stopLossHit || takeProfitHit) {
-        const exitPrice = bar.low * (1 - slippagePct / 100); // conservative exit on SL
-        const exitReason = stopLossHit ? "STOP_LOSS" : "TAKE_PROFIT";
+      if (stopLossHit || takeProfitHit || trailingStopHit || timeExitHit) {
+        const exitPrice = (stopLossHit || trailingStopHit)
+          ? bar.low * (1 - slippagePct / 100) // conservative exit on SL/trailing
+          : bar.close * (1 - slippagePct / 100);
+        const exitReason = stopLossHit
+          ? "STOP_LOSS"
+          : takeProfitHit
+          ? "TAKE_PROFIT"
+          : trailingStopHit
+          ? "TRAILING_STOP"
+          : "TIME_EXIT";
         closeTrade(openTrade, exitPrice, bar.timestamp, exitReason);
         openTrade = null;
       }
@@ -163,6 +184,8 @@ export async function runBacktest(
         shares,
         entryCapital: tradeCapital,
         status: "OPEN",
+        highWatermark: entryPrice,
+        entryBarIndex: i,
       };
       trades.push(openTrade);
     }
