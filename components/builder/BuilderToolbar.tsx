@@ -2,6 +2,8 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useBuilderStore } from '@/lib/store/builderStore';
+import { useModal } from '@/hooks/useModal';
+import { PromptContent } from '@/components/ui/Modal';
 import type { Strategy } from '@/types/strategy';
 
 const MAX_STRATEGIES = 5;
@@ -17,6 +19,7 @@ function writeSaved(list: Strategy[]): void {
 export function BuilderToolbar() {
   const { nodes, edges, viewport, strategyName, setStrategyName, loadStrategy, clearCanvas } =
     useBuilderStore();
+  const { openModal, showAlert, showConfirm } = useModal();
   const [loadOpen, setLoadOpen] = useState(false);
   const [savedList, setSavedList] = useState<Strategy[]>([]);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -35,12 +38,23 @@ export function BuilderToolbar() {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  const handleSave = () => {
-    const inputName = window.prompt('저장할 전략 이름을 입력하세요', strategyName);
+  const handleSave = async () => {
+    const inputName = await openModal<string | null>({
+      title: '전략 저장',
+      defaultCloseValue: null,
+      renderContent: (close) => (
+        <PromptContent
+          message="저장할 전략 이름을 입력하세요"
+          defaultValue={strategyName}
+          onConfirm={close}
+          onCancel={() => close(null)}
+        />
+      ),
+    });
     if (inputName === null) return;
     const trimmed = inputName.trim();
     if (!trimmed) {
-      alert('전략 이름을 입력해주세요.');
+      await showAlert('전략 이름을 입력해주세요.');
       return;
     }
 
@@ -52,18 +66,20 @@ export function BuilderToolbar() {
 
     // 새 항목 추가 시 저장 한도 확인 (이름 변경은 기존 항목이 제거되므로 제외)
     if (existingIdx < 0 && !isRenaming && saved.length >= MAX_STRATEGIES) {
-      alert(`전략은 최대 ${MAX_STRATEGIES}개까지 저장할 수 있습니다.\n불러오기 메뉴에서 기존 전략을 삭제한 후 다시 시도해주세요.`);
+      await showAlert(
+        `전략은 최대 ${MAX_STRATEGIES}개까지 저장할 수 있습니다.\n불러오기 메뉴에서 기존 전략을 삭제한 후 다시 시도해주세요.`,
+      );
       return;
     }
 
     // 동일 이름 전략 덮어쓰기 확인 (자기 자신 제외)
     if (existingIdx >= 0 && existingIdx !== oldIdx) {
-      const ok = window.confirm(`'${trimmed}' 전략이 이미 존재합니다. 덮어쓰시겠습니까?`);
+      const ok = await showConfirm(`'${trimmed}' 전략이 이미 존재합니다. 덮어쓰시겠습니까?`);
       if (!ok) return;
     }
 
     const now = new Date().toISOString();
-    const baseEntry = existingIdx >= 0 ? saved[existingIdx] : (isRenaming ? saved[oldIdx] : null);
+    const baseEntry = existingIdx >= 0 ? saved[existingIdx] : isRenaming ? saved[oldIdx] : null;
     const strategy: Strategy = {
       meta: {
         id: baseEntry?.meta.id ?? `strategy_${Date.now()}`,
@@ -90,7 +106,7 @@ export function BuilderToolbar() {
     writeSaved(newSaved);
     setStrategyName(trimmed);
     setPersistedName(trimmed); // 저장 후 persistedName 갱신
-    alert('전략이 저장되었습니다.');
+    await showAlert('전략이 저장되었습니다.');
   };
 
   const handleOpenLoad = () => {
@@ -104,8 +120,10 @@ export function BuilderToolbar() {
     setLoadOpen(false);
   };
 
-  const handleDelete = (name: string) => {
-    const ok = window.confirm(`'${name}' 전략을 삭제하시겠습니까?`);
+  const handleDelete = async (name: string) => {
+    const ok = await showConfirm(`'${name}' 전략을 삭제하시겠습니까?`, undefined, {
+      isDanger: true,
+    });
     if (!ok) return;
     const newSaved = readSaved().filter((s) => s.meta.name !== name);
     writeSaved(newSaved);
@@ -114,10 +132,12 @@ export function BuilderToolbar() {
     if (name === persistedName) setPersistedName(null);
   };
 
-  const handleNew = () => {
+  const handleNew = async () => {
     if (nodes.length > 0) {
-      const ok = window.confirm(
+      const ok = await showConfirm(
         '현재 캔버스를 비우고 새 전략을 시작하시겠습니까?\n저장되지 않은 변경사항은 사라집니다.',
+        undefined,
+        { isDanger: true },
       );
       if (!ok) return;
     }
@@ -129,16 +149,16 @@ export function BuilderToolbar() {
   const atLimit = savedList.length >= MAX_STRATEGIES;
 
   return (
-    <header className="h-13 flex items-center gap-3 px-4 border-b border-[var(--color-border-subtle)] bg-[var(--color-bg-surface)] shrink-0">
+    <header className="h-13 flex shrink-0 items-center gap-3 border-b border-(--color-border-subtle) bg-(--color-bg-surface) px-4">
       {/* Logo */}
-      <span className="text-sm font-bold text-[var(--color-accent)] mr-2">BacktestApp</span>
+      <span className="mr-2 text-sm font-bold text-(--color-accent)">BacktestApp</span>
 
       {/* Strategy name */}
       <input
         type="text"
         value={strategyName}
         onChange={(e) => setStrategyName(e.target.value)}
-        className="flex-1 max-w-xs bg-transparent text-sm font-medium text-[var(--color-text-primary)] border-b border-transparent focus:border-[var(--color-border-default)] focus:outline-none transition-colors px-1 py-0.5"
+        className="max-w-xs flex-1 border-b border-transparent bg-transparent px-1 py-0.5 text-sm font-medium text-foreground transition-colors focus:border-(--color-border-default) focus:outline-none"
         placeholder="전략 이름"
       />
 
