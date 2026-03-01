@@ -23,7 +23,7 @@ export default function HomePage() {
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
       <header className="border-b border-(--color-border-subtle) px-8 h-14 flex items-center">
-        <span className="text-base font-bold text-(--color-accent)">BacktestApp</span>
+        <span className="text-base font-bold text-(--color-accent)">AlphaNodes</span>
         <div className="flex-1" />
         <Link
           href="/builder"
@@ -88,7 +88,7 @@ export default function HomePage() {
       </main>
 
       <footer className="border-t border-(--color-border-subtle) px-8 py-4 text-center text-xs text-(--color-text-muted)">
-        BacktestApp · 노코드 백테스팅 플랫폼
+        AlphaNodes · 노코드 백테스팅 플랫폼
       </footer>
     </div>
   );

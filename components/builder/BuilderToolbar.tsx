@@ -151,7 +151,7 @@ export function BuilderToolbar() {
   return (
     <header className="h-13 flex shrink-0 items-center gap-3 border-b border-(--color-border-subtle) bg-(--color-bg-surface) px-4">
       {/* Logo */}
-      <span className="mr-2 text-sm font-bold text-(--color-accent)">BacktestApp</span>
+      <span className="mr-2 text-sm font-bold text-(--color-accent)">AlphaNodes</span>
 
       {/* Strategy name */}
       <input

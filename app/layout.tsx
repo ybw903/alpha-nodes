@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "BacktestApp — 노코드 백테스팅",
+  title: "AlphaNodes — 노코드 백테스팅",
   description: "코드 없이 블록 드래그앤드롭으로 매매 전략을 구성하고 백테스트하세요.",
 };
 

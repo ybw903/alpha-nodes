@@ -43,7 +43,7 @@ export default function ResultsPage() {
             href="/builder"
             className="text-sm text-[var(--color-accent)] font-bold hover:text-[var(--color-accent-hover)] transition-colors"
           >
-            BacktestApp
+            AlphaNodes
           </Link>
           <span className="text-[var(--color-border-default)]">/</span>
           <span className="text-sm font-semibold text-[var(--color-text-primary)]">
