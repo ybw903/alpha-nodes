@@ -8,20 +8,33 @@ function stdDev(values: number[]): number {
   return Math.sqrt(variance);
 }
 
+const BARS_PER_YEAR: Record<string, number> = {
+  "15m": 252 * 26,
+  "30m": 252 * 13,
+  "1h": 252 * 6.5,
+  "4h": 252 * 1.625,
+  "1d": 252,
+  "1w": 52,
+  "1m": 12,
+};
+
 export function computeMetrics(
   trades: Trade[],
   equityCurve: EquityDataPoint[],
   initialCapital: number,
   totalFees: number,
+  timeframe: string = "1d",
 ): PerformanceMetrics {
   const finalCapital = equityCurve.at(-1)?.equity ?? initialCapital;
   const peakCapital = Math.max(...equityCurve.map((e) => e.equity));
   const totalReturnPct = ((finalCapital - initialCapital) / initialCapital) * 100;
 
-  // Annualized return (CAGR)
-  const years = equityCurve.length / 252;
-  const annualizedReturnPct = years > 0
-    ? ((finalCapital / initialCapital) ** (1 / years) - 1) * 100
+  // Annualized return (CAGR) — timestamp 기반 실제 경과 기간 사용
+  const startTs = equityCurve[0]?.timestamp ?? 0;
+  const endTs = equityCurve.at(-1)?.timestamp ?? 0;
+  const yearsFraction = (endTs - startTs) / (365.25 * 86_400_000);
+  const annualizedReturnPct = yearsFraction > 0
+    ? ((finalCapital / initialCapital) ** (1 / yearsFraction) - 1) * 100
     : 0;
 
   // Benchmark (buy-and-hold)
@@ -42,17 +55,18 @@ export function computeMetrics(
   const meanDaily = dailyReturns.length > 0
     ? dailyReturns.reduce((a, b) => a + b, 0) / dailyReturns.length
     : 0;
+  const barsPerYear = BARS_PER_YEAR[timeframe] ?? 252;
   const stdDaily = stdDev(dailyReturns);
-  const sharpeRatio = stdDaily !== 0 ? (meanDaily / stdDaily) * Math.sqrt(252) : 0;
+  const sharpeRatio = stdDaily !== 0 ? (meanDaily / stdDaily) * Math.sqrt(barsPerYear) : 0;
 
   const downsideReturns = dailyReturns.filter((r) => r < 0);
   const downsideStd = stdDev(downsideReturns);
   const sortinoRatio = downsideStd !== 0
-    ? ((annualizedReturnPct / 100) / (downsideStd * Math.sqrt(252)))
+    ? ((annualizedReturnPct / 100) / (downsideStd * Math.sqrt(barsPerYear)))
     : 0;
 
   const calmarRatio = maxDrawdownPct !== 0 ? annualizedReturnPct / maxDrawdownPct : 0;
-  const volatilityAnnualized = stdDaily * Math.sqrt(252) * 100;
+  const volatilityAnnualized = stdDaily * Math.sqrt(barsPerYear) * 100;
 
   // Trade statistics
   const closedTrades = trades.filter((t) => t.status === 'CLOSED' && t.pnlPct !== undefined);

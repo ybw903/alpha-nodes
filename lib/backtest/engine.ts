@@ -46,6 +46,10 @@ export async function runBacktest(
   // 1. Fetch real market data with warmup buffer
   const warmup = getMaxPeriod(nodes);
   const TIMEFRAME_MS: Record<string, number> = {
+    "15m": 15 * 60_000,
+    "30m": 30 * 60_000,
+    "1h": 60 * 60_000,
+    "4h": 4 * 60 * 60_000,
     "1d": 86_400_000,
     "1w": 7 * 86_400_000,
     "1m": 30 * 86_400_000,
@@ -239,7 +243,8 @@ export async function runBacktest(
     trades,
     equityCurve,
     initialCapital,
-    totalFees
+    totalFees,
+    strategy.meta.timeframe
   );
 
   return {

@@ -34,10 +34,14 @@ export function RunPanel() {
     { value: "CRYPTO", label: t("assetClass.CRYPTO"), placeholder: "BTCUSDT" },
   ];
 
-  const timeframeOptions: { value: Timeframe; label: string }[] = [
-    { value: "1d", label: t("timeframe.1d") },
-    { value: "1w", label: t("timeframe.1w") },
-    { value: "1m", label: t("timeframe.1m") },
+  const timeframeOptions: { value: Timeframe; label: string; disabled?: boolean }[] = [
+    { value: "15m", label: t("timeframe.15m") },
+    { value: "30m", label: t("timeframe.30m") },
+    { value: "1h",  label: t("timeframe.1h") },
+    { value: "4h",  label: t("timeframe.4h"), disabled: assetClass === "STOCK" },
+    { value: "1d",  label: t("timeframe.1d") },
+    { value: "1w",  label: t("timeframe.1w") },
+    { value: "1m",  label: t("timeframe.1m") },
   ];
 
   const handleAssetClassChange = (ac: AssetClass) => {
@@ -183,22 +187,29 @@ export function RunPanel() {
           <span className="text-[11px] font-medium text-[var(--color-text-secondary)]">
             {t("fields.timeframe")}
           </span>
-          <div className="flex rounded-md overflow-hidden border border-(--color-border-default)">
+          <div className="flex flex-wrap rounded-md overflow-hidden border border-(--color-border-default)">
             {timeframeOptions.map((opt) => (
               <button
                 key={opt.value}
                 type="button"
-                onClick={() => patchRunConfig({ timeframe: opt.value })}
-                className={`flex-1 py-1.5 text-xs font-medium transition-colors ${
+                disabled={opt.disabled}
+                onClick={() => !opt.disabled && patchRunConfig({ timeframe: opt.value })}
+                className={`w-[calc(100%/4)] py-1.5 text-xs font-medium transition-colors border-r border-(--color-border-default) last:border-r-0 ${
                   timeframe === opt.value
                     ? "bg-(--color-accent) text-white"
                     : "bg-(--color-bg-elevated) text-(--color-text-secondary) hover:text-foreground"
-                }`}
+                } disabled:opacity-30 disabled:cursor-not-allowed`}
               >
                 {opt.label}
               </button>
             ))}
           </div>
+          {assetClass === "STOCK" && (timeframe === "15m" || timeframe === "30m") && (
+            <p className="text-[11px] text-amber-400">{t("intradayWarning.days60")}</p>
+          )}
+          {assetClass === "STOCK" && timeframe === "1h" && (
+            <p className="text-[11px] text-amber-400">{t("intradayWarning.days730")}</p>
+          )}
         </div>
 
         {/* Date range */}

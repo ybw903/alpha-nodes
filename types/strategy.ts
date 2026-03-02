@@ -6,7 +6,7 @@ export type StrategyId = string;
 
 export type HandleDataType = "NUMERIC" | "BOOLEAN";
 export type AssetClass = "STOCK" | "CRYPTO";
-export type Timeframe = "1d" | "1w" | "1m";
+export type Timeframe = "1d" | "1w" | "1m" | "15m" | "30m" | "1h" | "4h";
 export type PriceSource = "open" | "high" | "low" | "close" | "volume";
 export type MACDOutput = "macd" | "signal" | "histogram";
 export type BollingerOutput = "upper" | "middle" | "lower";
