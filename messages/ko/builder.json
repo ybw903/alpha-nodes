@@ -1,0 +1,38 @@
+{
+  "toolbar": {
+    "newStrategy": "새 전략",
+    "load": "불러오기",
+    "save": "저장",
+    "strategyNamePlaceholder": "전략 이름",
+    "saveModal": {
+      "title": "전략 저장",
+      "message": "저장할 전략 이름을 입력하세요"
+    },
+    "loadDropdown": {
+      "empty": "저장된 전략이 없습니다",
+      "savedStrategies": "저장된 전략",
+      "limitReached": "저장 한도에 도달했습니다",
+      "deleteTitle": "삭제"
+    },
+    "newStrategyDefault": "새 전략"
+  },
+  "sidebar": {
+    "title": "블록 팔레트",
+    "hint": "드래그하여 캔버스에 추가",
+    "categories": {
+      "indicator": "지표",
+      "condition": "조건",
+      "action": "액션",
+      "logic": "논리"
+    }
+  },
+  "panels": {
+    "nodeConfig": "노드 설정",
+    "run": "실행 설정"
+  },
+  "nodeConfig": {
+    "title": "노드 설정",
+    "noParams": "설정 가능한 파라미터가 없습니다.",
+    "noNodeSelected": "노드를 선택하면\n파라미터를 편집할 수 있습니다"
+  }
+}

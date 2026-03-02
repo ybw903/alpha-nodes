@@ -1,0 +1,21 @@
+{
+  "fields": {
+    "period": "기간 (Period)",
+    "source": "소스",
+    "fastPeriod": "빠른 기간",
+    "slowPeriod": "느린 기간",
+    "signalPeriod": "시그널 기간",
+    "output": "출력",
+    "stdDev": "표준편차 배수",
+    "field": "가격 필드",
+    "operator": "연산자",
+    "value": "기준값",
+    "count": "연속 봉 수",
+    "lookbackPeriod": "N봉 전",
+    "positionSizePct": "포지션 크기 (%)",
+    "stopLossPct": "손절 (%)",
+    "takeProfitPct": "익절 (%)",
+    "trailingStopPct": "트레일링 스탑 (%)",
+    "exitAfterBars": "N봉 후 자동 청산"
+  }
+}

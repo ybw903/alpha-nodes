@@ -1,13 +1,14 @@
 "use client";
 
 import { clsx } from "clsx";
+import { useTranslations } from "next-intl";
 import type { PerformanceMetrics } from "@/types/metrics";
 
 interface MetricCardProps {
   label: string;
   value: string;
   subValue?: string;
-  positive?: boolean | null; // null = neutral
+  positive?: boolean | null;
 }
 
 function MetricCard({ label, value, subValue, positive }: MetricCardProps) {
@@ -43,36 +44,38 @@ function fmtNum(v: number, decimals = 2): string {
   return v.toFixed(decimals);
 }
 
-function fmtKRW(v: number): string {
+function fmtCapital(v: number): string {
   if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(1)}M`;
   if (v >= 1_000) return `${(v / 1_000).toFixed(0)}K`;
   return v.toFixed(0);
 }
 
 export function MetricsGrid({ metrics }: { metrics: PerformanceMetrics }) {
+  const t = useTranslations("results");
+
   const cards: MetricCardProps[] = [
     {
-      label: "총 수익률",
+      label: t("metrics.totalReturn"),
       value: fmtPct(metrics.totalReturnPct),
-      subValue: `연환산 ${fmtPct(metrics.annualizedReturnPct)}`,
+      subValue: t("metrics.annualized", { value: fmtPct(metrics.annualizedReturnPct) }),
       positive: metrics.totalReturnPct >= 0,
     },
     {
-      label: "벤치마크 대비",
+      label: t("metrics.benchmarkDiff"),
       value: fmtPct(metrics.totalReturnPct - metrics.benchmarkReturnPct),
-      subValue: `B&H ${fmtPct(metrics.benchmarkReturnPct)}`,
+      subValue: t("metrics.bnh", { value: fmtPct(metrics.benchmarkReturnPct) }),
       positive: metrics.totalReturnPct >= metrics.benchmarkReturnPct,
     },
     {
-      label: "최대 낙폭 (MDD)",
+      label: t("metrics.mdd"),
       value: `-${metrics.maxDrawdownPct.toFixed(2)}%`,
       subValue: undefined,
       positive: metrics.maxDrawdownPct <= 20,
     },
     {
-      label: "샤프 지수",
+      label: t("metrics.sharpe"),
       value: fmtNum(metrics.sharpeRatio, 3),
-      subValue: `소르티노 ${fmtNum(metrics.sortinoRatio, 3)}`,
+      subValue: t("metrics.sortino", { value: fmtNum(metrics.sortinoRatio, 3) }),
       positive:
         metrics.sharpeRatio >= 1
           ? true
@@ -81,18 +84,19 @@ export function MetricsGrid({ metrics }: { metrics: PerformanceMetrics }) {
           : false,
     },
     {
-      label: "승률",
+      label: t("metrics.winRate"),
       value: `${(metrics.winRate * 100).toFixed(1)}%`,
-      subValue: `${metrics.totalTrades}건 거래`,
+      subValue: t("metrics.tradeCount", { count: metrics.totalTrades }),
       positive:
         metrics.winRate >= 0.5 ? true : metrics.winRate >= 0.4 ? null : false,
     },
     {
-      label: "손익비 (PF)",
+      label: t("metrics.profitFactor"),
       value: fmtNum(metrics.profitFactor, 2),
-      subValue: `평균 수익 ${fmtPct(metrics.avgWinPct)} / 손실 ${fmtPct(
-        metrics.avgLossPct
-      )}`,
+      subValue: t("metrics.avgWinLoss", {
+        win: fmtPct(metrics.avgWinPct),
+        loss: fmtPct(metrics.avgLossPct),
+      }),
       positive:
         metrics.profitFactor >= 1.5
           ? true
@@ -101,15 +105,15 @@ export function MetricsGrid({ metrics }: { metrics: PerformanceMetrics }) {
           : false,
     },
     {
-      label: "최종 자본",
-      value: `${fmtKRW(metrics.finalCapital)}원`,
-      subValue: `초기 ${fmtKRW(metrics.initialCapital)}원`,
+      label: t("metrics.finalCapital"),
+      value: t("metrics.capitalValue", { value: fmtCapital(metrics.finalCapital) }),
+      subValue: t("metrics.initialCapital", { value: fmtCapital(metrics.initialCapital) }),
       positive: metrics.finalCapital >= metrics.initialCapital,
     },
     {
-      label: "수수료 총액",
-      value: `${fmtKRW(metrics.totalFeesSpent)}원`,
-      subValue: `평균 보유 ${metrics.avgHoldingPeriodBars.toFixed(0)}일`,
+      label: t("metrics.totalFees"),
+      value: t("metrics.capitalValue", { value: fmtCapital(metrics.totalFeesSpent) }),
+      subValue: t("metrics.avgHolding", { days: metrics.avgHoldingPeriodBars.toFixed(0) }),
       positive: null,
     },
   ];

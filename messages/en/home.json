@@ -1,0 +1,31 @@
+{
+  "meta": {
+    "title": "AlphaNodes — No-Code Backtesting",
+    "description": "Build and backtest trading strategies with drag-and-drop blocks. No coding required."
+  },
+  "header": {
+    "startButton": "Get Started"
+  },
+  "hero": {
+    "badge": "Phase 1 · Mock Data",
+    "headline1": "Build Trading Strategies",
+    "headline2": "No-Code Strategy Backtester",
+    "description": "Just drag and connect blocks to build SMA crossover, RSI oversold strategies, and more — then instantly view backtest results.",
+    "cta": "Open Strategy Builder"
+  },
+  "features": {
+    "dragAndDrop": {
+      "title": "Drag & Drop Blocks",
+      "description": "Visually compose strategies by combining indicator blocks like SMA, RSI, MACD without any code."
+    },
+    "accurateBacktest": {
+      "title": "Accurate Backtesting",
+      "description": "Realistic simulation with fees and slippage to verify actual strategy performance."
+    },
+    "analytics": {
+      "title": "Performance Analytics",
+      "description": "View key metrics like MDD, Sharpe ratio, win rate, and profit factor at a glance."
+    }
+  },
+  "footer": "AlphaNodes · No-Code Backtesting Platform"
+}

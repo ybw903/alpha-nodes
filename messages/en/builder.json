@@ -1,0 +1,38 @@
+{
+  "toolbar": {
+    "newStrategy": "New",
+    "load": "Load",
+    "save": "Save",
+    "strategyNamePlaceholder": "Strategy name",
+    "saveModal": {
+      "title": "Save Strategy",
+      "message": "Enter a name for this strategy"
+    },
+    "loadDropdown": {
+      "empty": "No saved strategies",
+      "savedStrategies": "Saved strategies",
+      "limitReached": "Limit reached",
+      "deleteTitle": "Delete"
+    },
+    "newStrategyDefault": "New Strategy"
+  },
+  "sidebar": {
+    "title": "Block Palette",
+    "hint": "Drag to canvas to add",
+    "categories": {
+      "indicator": "Indicator",
+      "condition": "Condition",
+      "action": "Action",
+      "logic": "Logic"
+    }
+  },
+  "panels": {
+    "nodeConfig": "Node Config",
+    "run": "Run Settings"
+  },
+  "nodeConfig": {
+    "title": "Node Settings",
+    "noParams": "No configurable parameters.",
+    "noNodeSelected": "Select a node to\nedit its parameters"
+  }
+}

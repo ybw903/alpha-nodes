@@ -1,0 +1,53 @@
+{
+  "loading": "결과를 불러오는 중...",
+  "editStrategy": "전략 수정",
+  "warnings": "경고",
+  "sections": {
+    "metrics": "성과 지표",
+    "priceChart": "가격 차트",
+    "equityChart": "수익 차트",
+    "trades": "거래 내역"
+  },
+  "metrics": {
+    "totalReturn": "총 수익률",
+    "annualized": "연환산 {value}",
+    "benchmarkDiff": "벤치마크 대비",
+    "bnh": "B&H {value}",
+    "mdd": "최대 낙폭 (MDD)",
+    "sharpe": "샤프 지수",
+    "sortino": "소르티노 {value}",
+    "winRate": "승률",
+    "tradeCount": "{count}건 거래",
+    "profitFactor": "손익비 (PF)",
+    "avgWinLoss": "평균 수익 {win} / 손실 {loss}",
+    "finalCapital": "최종 자본",
+    "capitalValue": "{value}원",
+    "initialCapital": "초기 {value}원",
+    "totalFees": "수수료 총액",
+    "avgHolding": "평균 보유 {days}일"
+  },
+  "tradeTable": {
+    "count": "거래 내역 ({count}건)",
+    "entryDate": "진입일",
+    "entryPrice": "진입가",
+    "exitDate": "청산일",
+    "exitPrice": "청산가",
+    "holdDays": "보유일",
+    "pnl": "수익률",
+    "exitReason": "청산 이유",
+    "noTrades": "거래 내역이 없습니다.",
+    "holdUnit": "{days}일",
+    "exitReasons": {
+      "SIGNAL": "시그널",
+      "STOP_LOSS": "손절",
+      "TAKE_PROFIT": "익절",
+      "END_OF_DATA": "데이터 종료",
+      "TRAILING_STOP": "트레일링 스탑",
+      "TIME_EXIT": "시간 청산"
+    }
+  },
+  "drawdown": {
+    "title": "낙폭 (Drawdown)",
+    "series": "낙폭"
+  }
+}

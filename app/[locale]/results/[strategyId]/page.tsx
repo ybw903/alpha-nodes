@@ -1,18 +1,22 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
+import { useRouter } from "@/i18n/navigation";
+import { Link } from "@/i18n/navigation";
 import { useBacktestStore } from "@/lib/store/backtestStore";
 import { MetricsGrid } from "@/components/results/MetricsGrid";
 import { CandlestickChart } from "@/components/results/CandlestickChart";
 import { EquityChart } from "@/components/results/EquityChart";
 import { DrawdownChart } from "@/components/results/DrawdownChart";
 import { TradeTable } from "@/components/results/TradeTable";
+import { useTranslations } from "next-intl";
+import { useFormatter } from "next-intl";
 
 export default function ResultsPage() {
   const router = useRouter();
   const { result } = useBacktestStore();
+  const t = useTranslations("results");
+  const format = useFormatter();
 
   useEffect(() => {
     if (!result) {
@@ -23,7 +27,7 @@ export default function ResultsPage() {
   if (!result) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <p className="text-[var(--color-text-muted)]">결과를 불러오는 중...</p>
+        <p className="text-[var(--color-text-muted)]">{t("loading")}</p>
       </div>
     );
   }
@@ -31,8 +35,16 @@ export default function ResultsPage() {
   const { metrics, equityCurve, bars, trades, request, warnings } = result;
   const strategyName = request.strategy.meta.name;
   const symbol = request.strategy.meta.symbol;
-  const fromDate = new Date(request.from).toLocaleDateString("ko-KR");
-  const toDate = new Date(request.to).toLocaleDateString("ko-KR");
+  const fromDate = format.dateTime(new Date(request.from), {
+    year: "2-digit",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  const toDate = format.dateTime(new Date(request.to), {
+    year: "2-digit",
+    month: "2-digit",
+    day: "2-digit",
+  });
 
   return (
     <div className="min-h-screen bg-[var(--color-bg-base)]">
@@ -57,7 +69,7 @@ export default function ResultsPage() {
             href="/builder"
             className="px-4 py-1.5 text-xs font-semibold rounded-md bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white transition-colors"
           >
-            전략 수정
+            {t("editStrategy")}
           </Link>
         </div>
       </header>
@@ -68,7 +80,7 @@ export default function ResultsPage() {
         {warnings.length > 0 && (
           <div className="p-4 rounded-xl border border-[var(--color-warning)]/30 bg-[var(--color-warning)]/10">
             <p className="text-xs font-semibold text-[var(--color-warning)] mb-1">
-              경고
+              {t("warnings")}
             </p>
             {warnings.map((w, i) => (
               <p key={i} className="text-xs text-[var(--color-warning)]/80">
@@ -81,7 +93,7 @@ export default function ResultsPage() {
         {/* Metrics */}
         <section>
           <h2 className="text-sm font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider mb-3">
-            성과 지표
+            {t("sections.metrics")}
           </h2>
           <MetricsGrid metrics={metrics} />
         </section>
@@ -89,7 +101,7 @@ export default function ResultsPage() {
         {/* Candlestick chart */}
         <section className="space-y-4">
           <h2 className="text-sm font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider">
-            가격 차트
+            {t("sections.priceChart")}
           </h2>
           <CandlestickChart
             bars={bars}
@@ -101,7 +113,7 @@ export default function ResultsPage() {
         {/* Charts */}
         <section className="space-y-4">
           <h2 className="text-sm font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider">
-            수익 차트
+            {t("sections.equityChart")}
           </h2>
           <EquityChart
             equityCurve={equityCurve}
@@ -113,7 +125,7 @@ export default function ResultsPage() {
         {/* Trade log */}
         <section>
           <h2 className="text-sm font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider mb-3">
-            거래 내역
+            {t("sections.trades")}
           </h2>
           <TradeTable trades={trades} />
         </section>

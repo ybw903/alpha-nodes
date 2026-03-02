@@ -1,0 +1,53 @@
+{
+  "loading": "Loading results...",
+  "editStrategy": "Edit Strategy",
+  "warnings": "Warnings",
+  "sections": {
+    "metrics": "Performance Metrics",
+    "priceChart": "Price Chart",
+    "equityChart": "Equity Chart",
+    "trades": "Trade Log"
+  },
+  "metrics": {
+    "totalReturn": "Total Return",
+    "annualized": "Ann. {value}",
+    "benchmarkDiff": "vs Benchmark",
+    "bnh": "B&H {value}",
+    "mdd": "Max Drawdown (MDD)",
+    "sharpe": "Sharpe Ratio",
+    "sortino": "Sortino {value}",
+    "winRate": "Win Rate",
+    "tradeCount": "{count} trades",
+    "profitFactor": "Profit Factor (PF)",
+    "avgWinLoss": "Avg Win {win} / Loss {loss}",
+    "finalCapital": "Final Capital",
+    "capitalValue": "{value}",
+    "initialCapital": "Initial {value}",
+    "totalFees": "Total Fees",
+    "avgHolding": "Avg Hold {days}d"
+  },
+  "tradeTable": {
+    "count": "Trade Log ({count} trades)",
+    "entryDate": "Entry Date",
+    "entryPrice": "Entry Price",
+    "exitDate": "Exit Date",
+    "exitPrice": "Exit Price",
+    "holdDays": "Hold",
+    "pnl": "Return",
+    "exitReason": "Exit Reason",
+    "noTrades": "No trades found.",
+    "holdUnit": "{days}d",
+    "exitReasons": {
+      "SIGNAL": "Signal",
+      "STOP_LOSS": "Stop Loss",
+      "TAKE_PROFIT": "Take Profit",
+      "END_OF_DATA": "End of Data",
+      "TRAILING_STOP": "Trailing Stop",
+      "TIME_EXIT": "Time Exit"
+    }
+  },
+  "drawdown": {
+    "title": "Drawdown",
+    "series": "Drawdown"
+  }
+}

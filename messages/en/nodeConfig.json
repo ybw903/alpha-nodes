@@ -1,0 +1,21 @@
+{
+  "fields": {
+    "period": "Period",
+    "source": "Source",
+    "fastPeriod": "Fast Period",
+    "slowPeriod": "Slow Period",
+    "signalPeriod": "Signal Period",
+    "output": "Output",
+    "stdDev": "Std Dev Multiplier",
+    "field": "Price Field",
+    "operator": "Operator",
+    "value": "Threshold Value",
+    "count": "Consecutive Bars",
+    "lookbackPeriod": "N Bars Ago",
+    "positionSizePct": "Position Size (%)",
+    "stopLossPct": "Stop Loss (%)",
+    "takeProfitPct": "Take Profit (%)",
+    "trailingStopPct": "Trailing Stop (%)",
+    "exitAfterBars": "Auto Exit After N Bars"
+  }
+}

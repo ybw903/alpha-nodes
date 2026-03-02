@@ -1,0 +1,37 @@
+{
+  "title": "Run Settings",
+  "fields": {
+    "assetType": "Asset Type",
+    "symbol": "Asset Symbol",
+    "timeframe": "Timeframe",
+    "startDate": "Start Date",
+    "endDate": "End Date",
+    "initialCapital": "Initial Capital",
+    "fee": "Fee (%)",
+    "slippage": "Slippage (%)"
+  },
+  "assetClass": {
+    "STOCK": "Stock",
+    "CRYPTO": "Crypto"
+  },
+  "timeframe": {
+    "1d": "1D",
+    "1w": "1W",
+    "1m": "1M"
+  },
+  "runButton": "Run Backtest",
+  "runningButton": "Running...",
+  "validationError": "Please fill in all fields correctly.",
+  "validationErrors": {
+    "noBlocks": "Please add blocks to the canvas.",
+    "noSymbol": "Please enter an asset symbol.",
+    "missingBuySell": "Both BUY and SELL blocks are required."
+  },
+  "error": "An unknown error occurred.",
+  "backtestFailed": "Backtest failed: {message}",
+  "search": {
+    "placeholder": "Search symbol or name",
+    "loading": "Searching...",
+    "empty": "No results found"
+  }
+}

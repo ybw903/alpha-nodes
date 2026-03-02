@@ -1,10 +1,12 @@
 "use client";
 
 import { useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/navigation";
 import { useForm } from "react-hook-form";
+import { useTranslations } from "next-intl";
 import { useBuilderStore } from "@/lib/store/builderStore";
 import { useBacktestStore } from "@/lib/store/backtestStore";
+import { useModal } from "@/hooks/useModal";
 import { AssetSearch } from "@/components/builder/AssetSearch";
 import type { Strategy, AssetClass, Timeframe } from "@/types/strategy";
 import type { BacktestRequest } from "@/types/backtest";
@@ -17,28 +19,26 @@ interface RunFormValues {
   slippagePct: number;
 }
 
-const ASSET_CLASS_OPTIONS: {
-  value: AssetClass;
-  label: string;
-  placeholder: string;
-}[] = [
-  { value: "STOCK", label: "주식", placeholder: "AAPL / 005930.KS" },
-  { value: "CRYPTO", label: "CRYPTO", placeholder: "BTCUSDT" },
-];
-
-const TIMEFRAME_OPTIONS: { value: Timeframe; label: string }[] = [
-  { value: "1d", label: "1일" },
-  { value: "1w", label: "1주" },
-  { value: "1m", label: "1월" },
-];
-
 export function RunPanel() {
   const router = useRouter();
+  const t = useTranslations("runPanel");
+  const { showAlert } = useModal();
   const { nodes, edges, viewport, strategyName, runConfig, patchRunConfig } =
     useBuilderStore();
   const { setResult, setIsRunning, setError, isRunning } = useBacktestStore();
 
   const { assetClass, timeframe, symbol } = runConfig;
+
+  const assetClassOptions: { value: AssetClass; label: string; placeholder: string }[] = [
+    { value: "STOCK", label: t("assetClass.STOCK"), placeholder: "AAPL / 005930.KS" },
+    { value: "CRYPTO", label: t("assetClass.CRYPTO"), placeholder: "BTCUSDT" },
+  ];
+
+  const timeframeOptions: { value: Timeframe; label: string }[] = [
+    { value: "1d", label: t("timeframe.1d") },
+    { value: "1w", label: t("timeframe.1w") },
+    { value: "1m", label: t("timeframe.1m") },
+  ];
 
   const handleAssetClassChange = (ac: AssetClass) => {
     patchRunConfig({ assetClass: ac, symbol: "" });
@@ -67,17 +67,17 @@ export function RunPanel() {
 
   const onSubmit = async (values: RunFormValues) => {
     if (nodes.length === 0) {
-      alert("캔버스에 블록을 추가해주세요.");
+      await showAlert(t("validationErrors.noBlocks"));
       return;
     }
     if (!symbol.trim()) {
-      alert("자산 심볼을 입력해주세요.");
+      await showAlert(t("validationErrors.noSymbol"));
       return;
     }
     const hasBuy = nodes.some((n) => n.data.blockType === "BUY");
     const hasSell = nodes.some((n) => n.data.blockType === "SELL");
     if (!hasBuy || !hasSell) {
-      alert("매수(BUY)와 매도(SELL) 블록이 모두 필요합니다.");
+      await showAlert(t("validationErrors.missingBuySell"));
       return;
     }
 
@@ -120,21 +120,21 @@ export function RunPanel() {
       setResult(json.data);
       router.push(`/results/${strategyId}`);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "알 수 없는 오류";
+      const msg = err instanceof Error ? err.message : t("error");
       setError(msg);
-      alert("백테스트 실패: " + msg);
+      await showAlert(t("backtestFailed", { message: msg }));
     } finally {
       setIsRunning(false);
     }
   };
 
-  const currentAsset = ASSET_CLASS_OPTIONS.find((o) => o.value === assetClass)!;
+  const currentAsset = assetClassOptions.find((o) => o.value === assetClass)!;
 
   return (
     <div className="flex flex-col h-full overflow-y-auto">
       <div className="px-4 py-3 border-b border-[var(--color-border-subtle)]">
         <p className="text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider">
-          실행 설정
+          {t("title")}
         </p>
       </div>
 
@@ -145,10 +145,10 @@ export function RunPanel() {
         {/* Asset Class */}
         <div className="flex flex-col gap-1">
           <span className="text-[11px] font-medium text-[var(--color-text-secondary)]">
-            자산 유형
+            {t("fields.assetType")}
           </span>
           <div className="flex rounded-md overflow-hidden border border-(--color-border-default)">
-            {ASSET_CLASS_OPTIONS.map((opt) => (
+            {assetClassOptions.map((opt) => (
               <button
                 key={opt.value}
                 type="button"
@@ -168,7 +168,7 @@ export function RunPanel() {
         {/* Symbol Search */}
         <div className="flex flex-col gap-1">
           <span className="text-[11px] font-medium text-[var(--color-text-secondary)]">
-            자산 심볼
+            {t("fields.symbol")}
           </span>
           <AssetSearch
             assetClass={assetClass}
@@ -181,10 +181,10 @@ export function RunPanel() {
         {/* Timeframe */}
         <div className="flex flex-col gap-1">
           <span className="text-[11px] font-medium text-[var(--color-text-secondary)]">
-            타임프레임
+            {t("fields.timeframe")}
           </span>
           <div className="flex rounded-md overflow-hidden border border-(--color-border-default)">
-            {TIMEFRAME_OPTIONS.map((opt) => (
+            {timeframeOptions.map((opt) => (
               <button
                 key={opt.value}
                 type="button"
@@ -205,7 +205,7 @@ export function RunPanel() {
         <div className="flex gap-2">
           <label className="flex flex-col gap-1 flex-1">
             <span className="text-[11px] font-medium text-[var(--color-text-secondary)]">
-              시작일
+              {t("fields.startDate")}
             </span>
             <input
               type="date"
@@ -218,7 +218,7 @@ export function RunPanel() {
           </label>
           <label className="flex flex-col gap-1 flex-1">
             <span className="text-[11px] font-medium text-[var(--color-text-secondary)]">
-              종료일
+              {t("fields.endDate")}
             </span>
             <input
               type="date"
@@ -234,7 +234,7 @@ export function RunPanel() {
         {/* Capital */}
         <label className="flex flex-col gap-1">
           <span className="text-[11px] font-medium text-[var(--color-text-secondary)]">
-            초기 자본 (원)
+            {t("fields.initialCapital")}
           </span>
           <input
             type="number"
@@ -252,7 +252,7 @@ export function RunPanel() {
         <div className="flex gap-2">
           <label className="flex flex-col gap-1 flex-1">
             <span className="text-[11px] font-medium text-[var(--color-text-secondary)]">
-              수수료 (%)
+              {t("fields.fee")}
             </span>
             <input
               type="number"
@@ -268,7 +268,7 @@ export function RunPanel() {
           </label>
           <label className="flex flex-col gap-1 flex-1">
             <span className="text-[11px] font-medium text-[var(--color-text-secondary)]">
-              슬리피지 (%)
+              {t("fields.slippage")}
             </span>
             <input
               type="number"
@@ -286,7 +286,7 @@ export function RunPanel() {
 
         {Object.keys(errors).length > 0 && (
           <p className="text-xs text-[var(--color-danger)]">
-            모든 필드를 올바르게 입력해주세요.
+            {t("validationError")}
           </p>
         )}
 
@@ -297,7 +297,7 @@ export function RunPanel() {
           disabled={isRunning}
           className="w-full py-2.5 text-sm font-semibold rounded-md bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isRunning ? "백테스트 실행 중..." : "백테스트 실행"}
+          {isRunning ? t("runningButton") : t("runButton")}
         </button>
       </form>
     </div>

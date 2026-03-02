@@ -1,0 +1,19 @@
+{
+  "confirm": "확인",
+  "cancel": "취소",
+  "previous": "이전",
+  "next": "다음",
+  "alert": {
+    "saved": "전략이 저장되었습니다.",
+    "strategyNameRequired": "전략 이름을 입력해주세요.",
+    "strategyLimitReached": "전략은 최대 {max}개까지 저장할 수 있습니다.\n불러오기 메뉴에서 기존 전략을 삭제한 후 다시 시도해주세요.",
+    "addBlocksFirst": "캔버스에 블록을 추가해주세요.",
+    "symbolRequired": "자산 심볼을 입력해주세요.",
+    "buyAndSellRequired": "매수(BUY)와 매도(SELL) 블록이 모두 필요합니다."
+  },
+  "confirmMsg": {
+    "overwriteStrategy": "'{name}' 전략이 이미 존재합니다. 덮어쓰시겠습니까?",
+    "deleteStrategy": "'{name}' 전략을 삭제하시겠습니까?",
+    "newStrategy": "현재 캔버스를 비우고 새 전략을 시작하시겠습니까?\n저장되지 않은 변경사항은 사라집니다."
+  }
+}

@@ -2,16 +2,13 @@
 
 import * as Dialog from '@radix-ui/react-dialog';
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 // ─── Shell ────────────────────────────────────────────────────────────────────
-// Radix Dialog 래퍼. overlay + 컨테이너 + 타이틀만 담당.
-// 실제 내용(body)은 children으로 자유롭게 전달.
 
 export interface ModalShellProps {
   title?: string;
-  /** true이면 Escape 키와 오버레이 클릭으로 닫히지 않음 */
   preventClose?: boolean;
-  /** 모달이 닫힐 때 호출 (Escape 키 / 오버레이 클릭) */
   onClose: () => void;
   children: React.ReactNode;
 }
@@ -35,7 +32,6 @@ export function ModalShell({ title, preventClose = false, onClose, children }: M
             if (preventClose) e.preventDefault();
           }}
         >
-          {/* title이 없을 때도 Dialog.Title은 반드시 존재해야 함 (Radix 접근성 요구사항) */}
           <Dialog.Title
             className={
               title
@@ -61,10 +57,9 @@ export const btnPrimary = `${btn} bg-(--color-accent) text-white hover:bg-(--col
 export const btnDanger = `${btn} bg-(--color-danger) text-white hover:opacity-90`;
 
 // ─── Pre-built content components ─────────────────────────────────────────────
-// 기본 Alert / Confirm / Prompt 용. openModal의 renderContent에 직접 사용.
-// 커스텀 모달은 ModalShell 없이 openModal에 임의 ReactNode를 전달하면 됨.
 
 export function AlertContent({ message, onClose }: { message: string; onClose: () => void }) {
+  const t = useTranslations('common');
   return (
     <>
       <p className="whitespace-pre-line px-5 py-4 text-sm text-(--color-text-secondary)">
@@ -72,7 +67,7 @@ export function AlertContent({ message, onClose }: { message: string; onClose: (
       </p>
       <div className="flex justify-end px-5 pb-5">
         <button className={btnPrimary} autoFocus onClick={onClose}>
-          확인
+          {t('confirm')}
         </button>
       </div>
     </>
@@ -90,6 +85,7 @@ export function ConfirmContent({
   onConfirm: () => void;
   onCancel: () => void;
 }) {
+  const t = useTranslations('common');
   return (
     <>
       <p className="whitespace-pre-line px-5 py-4 text-sm text-(--color-text-secondary)">
@@ -97,10 +93,10 @@ export function ConfirmContent({
       </p>
       <div className="flex justify-end gap-2 px-5 pb-5">
         <button className={btnCancel} onClick={onCancel}>
-          취소
+          {t('cancel')}
         </button>
         <button className={isDanger ? btnDanger : btnPrimary} autoFocus onClick={onConfirm}>
-          확인
+          {t('confirm')}
         </button>
       </div>
     </>
@@ -118,6 +114,7 @@ export function PromptContent({
   onConfirm: (value: string) => void;
   onCancel: () => void;
 }) {
+  const t = useTranslations('common');
   const [value, setValue] = useState(defaultValue);
 
   return (
@@ -140,10 +137,10 @@ export function PromptContent({
       </div>
       <div className="flex justify-end gap-2 px-5 pb-5">
         <button className={btnCancel} onClick={onCancel}>
-          취소
+          {t('cancel')}
         </button>
         <button className={btnPrimary} onClick={() => onConfirm(value)}>
-          확인
+          {t('confirm')}
         </button>
       </div>
     </>

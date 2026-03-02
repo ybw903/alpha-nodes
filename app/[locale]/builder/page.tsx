@@ -6,6 +6,7 @@ import { BuilderCanvas } from "@/components/builder/BuilderCanvas";
 import { NodeConfigPanel } from "@/components/builder/panels/NodeConfigPanel";
 import { RunPanel } from "@/components/builder/panels/RunPanel";
 import { useUIStore } from "@/lib/store/uiStore";
+import { useTranslations } from "next-intl";
 
 export default function BuilderPage() {
   const { rightPanelMode } = useUIStore();
@@ -27,8 +28,8 @@ export default function BuilderPage() {
         <aside className="w-72 shrink-0 flex flex-col border-l border-[var(--color-border-subtle)] bg-[var(--color-bg-surface)]">
           {/* Panel tab switcher */}
           <div className="flex border-b border-[var(--color-border-subtle)]">
-            <PanelTab mode="config" label="노드 설정" />
-            <PanelTab mode="run" label="실행 설정" />
+            <PanelTab mode="config" />
+            <PanelTab mode="run" />
           </div>
 
           <div className="flex-1 overflow-hidden">
@@ -40,9 +41,11 @@ export default function BuilderPage() {
   );
 }
 
-function PanelTab({ mode, label }: { mode: "config" | "run"; label: string }) {
+function PanelTab({ mode }: { mode: "config" | "run" }) {
+  const t = useTranslations("builder");
   const { rightPanelMode, setRightPanelMode } = useUIStore();
   const active = rightPanelMode === mode;
+  const label = mode === "config" ? t("panels.nodeConfig") : t("panels.run");
 
   return (
     <button

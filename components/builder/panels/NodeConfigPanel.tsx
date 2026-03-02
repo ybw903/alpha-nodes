@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import { useTranslations } from 'next-intl';
 import { useBuilderStore } from '@/lib/store/builderStore';
 import type { BlockParams, BlockType } from '@/types/strategy';
 
@@ -12,7 +13,7 @@ const BOLLINGER_OUTPUT_OPTIONS = ['upper', 'middle', 'lower'];
 
 interface FieldDef {
   key: string;
-  label: string;
+  labelKey: string;
   type: 'number' | 'select';
   options?: string[];
   min?: number;
@@ -20,62 +21,61 @@ interface FieldDef {
 
 const FIELDS_BY_BLOCK: Record<BlockType, FieldDef[]> = {
   SMA: [
-    { key: 'period', label: '기간 (Period)', type: 'number', min: 1 },
-    { key: 'source', label: '소스', type: 'select', options: SOURCE_OPTIONS },
+    { key: 'period', labelKey: 'period', type: 'number', min: 1 },
+    { key: 'source', labelKey: 'source', type: 'select', options: SOURCE_OPTIONS },
   ],
   EMA: [
-    { key: 'period', label: '기간 (Period)', type: 'number', min: 1 },
-    { key: 'source', label: '소스', type: 'select', options: SOURCE_OPTIONS },
+    { key: 'period', labelKey: 'period', type: 'number', min: 1 },
+    { key: 'source', labelKey: 'source', type: 'select', options: SOURCE_OPTIONS },
   ],
   RSI: [
-    { key: 'period', label: '기간 (Period)', type: 'number', min: 2 },
-    { key: 'source', label: '소스', type: 'select', options: SOURCE_OPTIONS },
+    { key: 'period', labelKey: 'period', type: 'number', min: 2 },
+    { key: 'source', labelKey: 'source', type: 'select', options: SOURCE_OPTIONS },
   ],
   MACD: [
-    { key: 'fastPeriod', label: '빠른 기간', type: 'number', min: 1 },
-    { key: 'slowPeriod', label: '느린 기간', type: 'number', min: 1 },
-    { key: 'signalPeriod', label: '시그널 기간', type: 'number', min: 1 },
-    { key: 'output', label: '출력', type: 'select', options: MACD_OUTPUT_OPTIONS },
+    { key: 'fastPeriod', labelKey: 'fastPeriod', type: 'number', min: 1 },
+    { key: 'slowPeriod', labelKey: 'slowPeriod', type: 'number', min: 1 },
+    { key: 'signalPeriod', labelKey: 'signalPeriod', type: 'number', min: 1 },
+    { key: 'output', labelKey: 'output', type: 'select', options: MACD_OUTPUT_OPTIONS },
   ],
   BOLLINGER: [
-    { key: 'period', label: '기간', type: 'number', min: 1 },
-    { key: 'stdDev', label: '표준편차 배수', type: 'number', min: 0.1 },
-    { key: 'output', label: '출력', type: 'select', options: BOLLINGER_OUTPUT_OPTIONS },
+    { key: 'period', labelKey: 'period', type: 'number', min: 1 },
+    { key: 'stdDev', labelKey: 'stdDev', type: 'number', min: 0.1 },
+    { key: 'output', labelKey: 'output', type: 'select', options: BOLLINGER_OUTPUT_OPTIONS },
   ],
-  ATR: [{ key: 'period', label: '기간 (Period)', type: 'number', min: 1 }],
-  PRICE: [{ key: 'field', label: '가격 필드', type: 'select', options: SOURCE_OPTIONS }],
+  ATR: [{ key: 'period', labelKey: 'period', type: 'number', min: 1 }],
+  PRICE: [{ key: 'field', labelKey: 'field', type: 'select', options: SOURCE_OPTIONS }],
   VOLUME: [],
-  COMPARE: [{ key: 'operator', label: '연산자', type: 'select', options: OPERATOR_OPTIONS }],
+  COMPARE: [{ key: 'operator', labelKey: 'operator', type: 'select', options: OPERATOR_OPTIONS }],
   CROSSOVER: [],
   CROSSUNDER: [],
   THRESHOLD: [
-    { key: 'operator', label: '연산자', type: 'select', options: OPERATOR_OPTIONS },
-    { key: 'value', label: '기준값', type: 'number' },
+    { key: 'operator', labelKey: 'operator', type: 'select', options: OPERATOR_OPTIONS },
+    { key: 'value', labelKey: 'value', type: 'number' },
   ],
   AND: [],
   OR: [],
   NOT: [],
-  CONSECUTIVE: [{ key: 'count', label: '연속 봉 수', type: 'number', min: 2 }],
-  LOOKBACK: [{ key: 'period', label: 'N봉 전', type: 'number', min: 1 }],
-  BUY: [{ key: 'positionSizePct', label: '포지션 크기 (%)', type: 'number', min: 1 }],
+  CONSECUTIVE: [{ key: 'count', labelKey: 'count', type: 'number', min: 2 }],
+  LOOKBACK: [{ key: 'period', labelKey: 'lookbackPeriod', type: 'number', min: 1 }],
+  BUY: [{ key: 'positionSizePct', labelKey: 'positionSizePct', type: 'number', min: 1 }],
   SELL: [
-    { key: 'positionSizePct', label: '포지션 크기 (%)', type: 'number', min: 1 },
-    { key: 'stopLossPct', label: '손절 (%)', type: 'number', min: 0 },
-    { key: 'takeProfitPct', label: '익절 (%)', type: 'number', min: 0 },
-    { key: 'trailingStopPct', label: '트레일링 스탑 (%)', type: 'number', min: 0 },
-    { key: 'exitAfterBars', label: 'N봉 후 자동 청산', type: 'number', min: 1 },
+    { key: 'positionSizePct', labelKey: 'positionSizePct', type: 'number', min: 1 },
+    { key: 'stopLossPct', labelKey: 'stopLossPct', type: 'number', min: 0 },
+    { key: 'takeProfitPct', labelKey: 'takeProfitPct', type: 'number', min: 0 },
+    { key: 'trailingStopPct', labelKey: 'trailingStopPct', type: 'number', min: 0 },
+    { key: 'exitAfterBars', labelKey: 'exitAfterBars', type: 'number', min: 1 },
   ],
 };
 
 export function NodeConfigPanel() {
+  const t = useTranslations('builder');
+  const tNodeConfig = useTranslations('nodeConfig');
   const { nodes, selectedNodeId, updateNodeParams } = useBuilderStore();
   const selectedNode = nodes.find((n) => n.id === selectedNodeId);
 
   const { register, reset, getValues } = useForm<Record<string, unknown>>();
 
-  // 선택된 노드가 바뀔 때만 폼을 초기화.
-  // `nodes`를 deps에 넣으면 updateNodeParams → nodes 변경 → reset → onChange → 무한루프가 발생하므로
-  // 의도적으로 selectedNodeId 변경 시에만 실행.
   useEffect(() => {
     const node = nodes.find((n) => n.id === selectedNodeId);
     if (node) {
@@ -84,8 +84,6 @@ export function NodeConfigPanel() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedNodeId, reset]);
 
-  // watch() 구독 대신 각 필드의 onChange에서 getValues()로 직접 스토어 업데이트.
-  // watch(callback)은 렌더마다 새 참조를 반환해 useEffect deps 불안정 문제를 일으킴.
   const handleFieldChange = () => {
     if (!selectedNodeId) return;
     updateNodeParams(selectedNodeId, getValues() as BlockParams);
@@ -109,10 +107,8 @@ export function NodeConfigPanel() {
             />
           </svg>
         </div>
-        <p className="text-xs text-[var(--color-text-muted)]">
-          노드를 선택하면
-          <br />
-          파라미터를 편집할 수 있습니다
+        <p className="text-xs text-[var(--color-text-muted)] whitespace-pre-line">
+          {t('nodeConfig.noNodeSelected')}
         </p>
       </div>
     );
@@ -124,7 +120,7 @@ export function NodeConfigPanel() {
     <div className="flex flex-col h-full overflow-y-auto">
       <div className="px-4 py-3 border-b border-[var(--color-border-subtle)]">
         <p className="text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider">
-          노드 설정
+          {t('nodeConfig.title')}
         </p>
         <p className="text-sm font-bold text-[var(--color-text-primary)] mt-0.5">
           {selectedNode.data.label}
@@ -134,13 +130,13 @@ export function NodeConfigPanel() {
       <div className="px-4 py-3 space-y-3">
         {fields.length === 0 ? (
           <p className="text-xs text-[var(--color-text-muted)]">
-            설정 가능한 파라미터가 없습니다.
+            {t('nodeConfig.noParams')}
           </p>
         ) : (
           fields.map((field) => (
             <label key={field.key} className="flex flex-col gap-1">
               <span className="text-[11px] font-medium text-[var(--color-text-secondary)]">
-                {field.label}
+                {tNodeConfig(`fields.${field.labelKey}`)}
               </span>
               {field.type === 'select' ? (
                 <select

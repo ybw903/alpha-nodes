@@ -2,27 +2,32 @@
 
 import { useState } from 'react';
 import { clsx } from 'clsx';
+import { useTranslations } from 'next-intl';
+import { useFormatter } from 'next-intl';
 import type { Trade } from '@/types/backtest';
 
 const PAGE_SIZE = 20;
 
-function formatDate(ts?: number): string {
-  if (!ts) return '-';
-  return new Date(ts).toLocaleDateString('ko-KR', { year: '2-digit', month: '2-digit', day: '2-digit' });
-}
-
 function formatPrice(v?: number): string {
   if (v === undefined) return '-';
-  return v.toLocaleString('ko-KR', { maximumFractionDigits: 0 });
+  return v.toLocaleString(undefined, { maximumFractionDigits: 0 });
 }
 
 type SortKey = 'entryTimestamp' | 'exitTimestamp' | 'pnlPct' | 'entryPrice';
 type SortDir = 'asc' | 'desc';
 
 export function TradeTable({ trades }: { trades: Trade[] }) {
+  const t = useTranslations('results');
+  const tCommon = useTranslations('common');
+  const format = useFormatter();
   const [page, setPage] = useState(0);
   const [sortKey, setSortKey] = useState<SortKey>('entryTimestamp');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
+
+  const formatDate = (ts?: number): string => {
+    if (!ts) return '-';
+    return format.dateTime(new Date(ts), { year: '2-digit', month: '2-digit', day: '2-digit' });
+  };
 
   const closed = trades.filter((t) => t.status === 'CLOSED');
 
@@ -50,8 +55,8 @@ export function TradeTable({ trades }: { trades: Trade[] }) {
 
   if (closed.length === 0) {
     return (
-      <div className="flex items-center justify-center py-12 text-sm text-[var(--color-text-muted)] bg-[var(--color-bg-elevated)] rounded-xl border border-[var(--color-border-subtle)]">
-        거래 내역이 없습니다.
+      <div className="flex items-center justify-center py-12 text-sm text-(--color-text-muted) bg-(--color-bg-elevated) rounded-xl border border-(--color-border-subtle)">
+        {t('tradeTable.noTrades')}
       </div>
     );
   }
@@ -60,7 +65,7 @@ export function TradeTable({ trades }: { trades: Trade[] }) {
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between px-1">
         <span className="text-xs text-[var(--color-text-secondary)] font-medium">
-          거래 내역 ({closed.length}건)
+          {t('tradeTable.count', { count: closed.length })}
         </span>
         {totalPages > 1 && (
           <div className="flex items-center gap-2">
@@ -69,9 +74,9 @@ export function TradeTable({ trades }: { trades: Trade[] }) {
               disabled={page === 0}
               className="px-2 py-0.5 text-xs rounded border border-[var(--color-border-default)] text-[var(--color-text-secondary)] disabled:opacity-30"
             >
-              이전
+              {tCommon('previous')}
             </button>
-            <span className="text-xs text-[var(--color-text-muted)]">
+            <span className="text-xs text-(--color-text-muted)">
               {page + 1} / {totalPages}
             </span>
             <button
@@ -79,30 +84,30 @@ export function TradeTable({ trades }: { trades: Trade[] }) {
               disabled={page === totalPages - 1}
               className="px-2 py-0.5 text-xs rounded border border-[var(--color-border-default)] text-[var(--color-text-secondary)] disabled:opacity-30"
             >
-              다음
+              {tCommon('next')}
             </button>
           </div>
         )}
       </div>
 
-      <div className="overflow-x-auto rounded-xl border border-[var(--color-border-subtle)]">
+      <div className="overflow-x-auto rounded-xl border border-(--color-border-subtle)">
         <table className="w-full text-xs">
           <thead>
-            <tr className="border-b border-[var(--color-border-subtle)] bg-[var(--color-bg-elevated)]">
+            <tr className="border-b border-(--color-border-subtle) bg-(--color-bg-elevated)">
               {[
-                { key: 'entryTimestamp' as SortKey, label: '진입일' },
-                { key: 'entryPrice' as SortKey, label: '진입가' },
-                { key: 'exitTimestamp' as SortKey, label: '청산일' },
-                { key: null, label: '청산가' },
-                { key: null, label: '보유일' },
-                { key: 'pnlPct' as SortKey, label: '수익률' },
-                { key: null, label: '청산 이유' },
+                { key: 'entryTimestamp' as SortKey, label: t('tradeTable.entryDate') },
+                { key: 'entryPrice' as SortKey, label: t('tradeTable.entryPrice') },
+                { key: 'exitTimestamp' as SortKey, label: t('tradeTable.exitDate') },
+                { key: null, label: t('tradeTable.exitPrice') },
+                { key: null, label: t('tradeTable.holdDays') },
+                { key: 'pnlPct' as SortKey, label: t('tradeTable.pnl') },
+                { key: null, label: t('tradeTable.exitReason') },
               ].map(({ key, label }) => (
                 <th
                   key={label}
                   onClick={() => key && handleSort(key)}
                   className={clsx(
-                    'px-3 py-2 text-left font-medium text-[var(--color-text-muted)] whitespace-nowrap',
+                    'px-3 py-2 text-left font-medium text-(--color-text-muted) whitespace-nowrap',
                     key && 'cursor-pointer hover:text-[var(--color-text-secondary)] select-none'
                   )}
                 >
@@ -117,18 +122,15 @@ export function TradeTable({ trades }: { trades: Trade[] }) {
               const holdDays = trade.exitTimestamp
                 ? Math.round((trade.exitTimestamp - trade.entryTimestamp) / 86_400_000)
                 : '-';
-              const exitReasonLabel: Record<string, string> = {
-                SIGNAL: '시그널',
-                STOP_LOSS: '손절',
-                TAKE_PROFIT: '익절',
-                END_OF_DATA: '데이터 종료',
-              };
+              const exitReasonText = trade.exitReason
+                ? t(`tradeTable.exitReasons.${trade.exitReason}` as Parameters<typeof t>[0])
+                : '-';
 
               return (
                 <tr
                   key={trade.id}
                   className={clsx(
-                    'border-b border-[var(--color-border-subtle)] last:border-0',
+                    'border-b border-(--color-border-subtle) last:border-0',
                     win ? 'bg-[var(--color-success-subtle)]' : 'bg-[var(--color-danger-subtle)]'
                   )}
                 >
@@ -144,8 +146,8 @@ export function TradeTable({ trades }: { trades: Trade[] }) {
                   <td className="px-3 py-2 font-mono text-[var(--color-text-secondary)] whitespace-nowrap">
                     {formatPrice(trade.exitPrice)}
                   </td>
-                  <td className="px-3 py-2 font-mono text-[var(--color-text-muted)] whitespace-nowrap">
-                    {holdDays}일
+                  <td className="px-3 py-2 font-mono text-(--color-text-muted) whitespace-nowrap">
+                    {typeof holdDays === 'number' ? t('tradeTable.holdUnit', { days: holdDays }) : holdDays}
                   </td>
                   <td className={clsx(
                     'px-3 py-2 font-mono font-semibold whitespace-nowrap',
@@ -155,8 +157,8 @@ export function TradeTable({ trades }: { trades: Trade[] }) {
                       ? `${trade.pnlPct >= 0 ? '+' : ''}${trade.pnlPct.toFixed(2)}%`
                       : '-'}
                   </td>
-                  <td className="px-3 py-2 text-[var(--color-text-muted)] whitespace-nowrap">
-                    {exitReasonLabel[trade.exitReason ?? ''] ?? trade.exitReason ?? '-'}
+                  <td className="px-3 py-2 text-(--color-text-muted) whitespace-nowrap">
+                    {exitReasonText}
                   </td>
                 </tr>
               );

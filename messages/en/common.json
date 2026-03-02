@@ -1,0 +1,19 @@
+{
+  "confirm": "Confirm",
+  "cancel": "Cancel",
+  "previous": "Previous",
+  "next": "Next",
+  "alert": {
+    "saved": "Strategy has been saved.",
+    "strategyNameRequired": "Please enter a strategy name.",
+    "strategyLimitReached": "You can save up to {max} strategies.\nPlease delete an existing strategy and try again.",
+    "addBlocksFirst": "Please add blocks to the canvas.",
+    "symbolRequired": "Please enter an asset symbol.",
+    "buyAndSellRequired": "Both BUY and SELL blocks are required."
+  },
+  "confirmMsg": {
+    "overwriteStrategy": "Strategy '{name}' already exists. Overwrite?",
+    "deleteStrategy": "Delete strategy '{name}'?",
+    "newStrategy": "Clear the current canvas and start a new strategy?\nUnsaved changes will be lost."
+  }
+}

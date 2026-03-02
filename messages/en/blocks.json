@@ -1,0 +1,21 @@
+{
+  "PRICE":      { "label": "Price",      "description": "OHLCV price data" },
+  "VOLUME":     { "label": "Volume",     "description": "Volume data" },
+  "SMA":        { "label": "SMA",        "description": "Simple Moving Average" },
+  "EMA":        { "label": "EMA",        "description": "Exponential Moving Average" },
+  "RSI":        { "label": "RSI",        "description": "Relative Strength Index" },
+  "MACD":       { "label": "MACD",       "description": "Moving Average Convergence Divergence" },
+  "BOLLINGER":  { "label": "Bollinger",  "description": "Bollinger Bands" },
+  "ATR":        { "label": "ATR",        "description": "Average True Range" },
+  "LOOKBACK":   { "label": "Lookback",   "description": "Reference value N bars ago" },
+  "COMPARE":    { "label": "Compare",    "description": "Compare values A and B" },
+  "CROSSOVER":  { "label": "Crossover",  "description": "A crosses above B" },
+  "CROSSUNDER": { "label": "Crossunder", "description": "A crosses below B" },
+  "THRESHOLD":  { "label": "Threshold",  "description": "Compare value against a fixed number" },
+  "CONSECUTIVE":{ "label": "Consecutive","description": "Condition true for N consecutive bars" },
+  "AND":        { "label": "AND",        "description": "Both conditions are true" },
+  "OR":         { "label": "OR",         "description": "Either condition is true" },
+  "NOT":        { "label": "NOT",        "description": "Negate condition (invert)" },
+  "BUY":        { "label": "BUY",        "description": "Enter long position" },
+  "SELL":       { "label": "SELL",       "description": "Close long position" }
+}

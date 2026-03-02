@@ -1,0 +1,21 @@
+{
+  "PRICE":      { "label": "가격",      "description": "OHLCV 가격 데이터" },
+  "VOLUME":     { "label": "거래량",    "description": "거래량 데이터" },
+  "SMA":        { "label": "SMA",       "description": "단순 이동평균" },
+  "EMA":        { "label": "EMA",       "description": "지수 이동평균" },
+  "RSI":        { "label": "RSI",       "description": "상대강도지수" },
+  "MACD":       { "label": "MACD",      "description": "이동평균 수렴확산" },
+  "BOLLINGER":  { "label": "Bollinger", "description": "볼린저 밴드" },
+  "ATR":        { "label": "ATR",       "description": "평균 진폭 범위" },
+  "LOOKBACK":   { "label": "이전값",    "description": "N봉 전 값 참조" },
+  "COMPARE":    { "label": "비교",      "description": "A와 B 값 비교" },
+  "CROSSOVER":  { "label": "상향 교차", "description": "A가 B를 위로 교차" },
+  "CROSSUNDER": { "label": "하향 교차", "description": "A가 B를 아래로 교차" },
+  "THRESHOLD":  { "label": "임계값",    "description": "값과 고정 숫자 비교" },
+  "CONSECUTIVE":{ "label": "N봉 연속",  "description": "N봉 연속으로 참일 때" },
+  "AND":        { "label": "AND",       "description": "두 조건 모두 참" },
+  "OR":         { "label": "OR",        "description": "두 조건 중 하나 참" },
+  "NOT":        { "label": "NOT",       "description": "조건 부정 (반전)" },
+  "BUY":        { "label": "매수",      "description": "롱 포지션 진입" },
+  "SELL":       { "label": "매도",      "description": "롱 포지션 청산" }
+}

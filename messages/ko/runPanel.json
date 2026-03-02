@@ -1,0 +1,37 @@
+{
+  "title": "실행 설정",
+  "fields": {
+    "assetType": "자산 유형",
+    "symbol": "자산 심볼",
+    "timeframe": "타임프레임",
+    "startDate": "시작일",
+    "endDate": "종료일",
+    "initialCapital": "초기 자본 (원)",
+    "fee": "수수료 (%)",
+    "slippage": "슬리피지 (%)"
+  },
+  "assetClass": {
+    "STOCK": "주식",
+    "CRYPTO": "CRYPTO"
+  },
+  "timeframe": {
+    "1d": "1일",
+    "1w": "1주",
+    "1m": "1월"
+  },
+  "runButton": "백테스트 실행",
+  "runningButton": "백테스트 실행 중...",
+  "validationError": "모든 필드를 올바르게 입력해주세요.",
+  "validationErrors": {
+    "noBlocks": "캔버스에 블록을 추가해주세요.",
+    "noSymbol": "자산 심볼을 입력해주세요.",
+    "missingBuySell": "매수(BUY)와 매도(SELL) 블록이 모두 필요합니다."
+  },
+  "error": "알 수 없는 오류",
+  "backtestFailed": "백테스트 실패: {message}",
+  "search": {
+    "placeholder": "심볼 또는 종목명 검색",
+    "loading": "검색 중...",
+    "empty": "검색 결과가 없습니다"
+  }
+}

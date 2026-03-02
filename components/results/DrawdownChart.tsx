@@ -7,6 +7,7 @@ import {
   ColorType,
   AreaSeries,
 } from "lightweight-charts";
+import { useTranslations } from "next-intl";
 import type { EquityDataPoint } from "@/types/backtest";
 
 export function DrawdownChart({
@@ -14,6 +15,7 @@ export function DrawdownChart({
 }: {
   equityCurve: EquityDataPoint[];
 }) {
+  const t = useTranslations("results");
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
 
@@ -49,7 +51,7 @@ export function DrawdownChart({
       topColor: "rgba(239, 68, 68, 0.2)",
       bottomColor: "rgba(239, 68, 68, 0)",
       lineWidth: 1,
-      title: "낙폭",
+      title: t("drawdown.series"),
       priceFormat: { type: "percent", precision: 2, minMove: 0.01 },
     });
 
@@ -73,16 +75,16 @@ export function DrawdownChart({
       resizeObserver.disconnect();
       chart.remove();
     };
-  }, [equityCurve]);
+  }, [equityCurve, t]);
 
   return (
     <div className="flex flex-col gap-2">
-      <span className="text-xs text-[var(--color-text-secondary)] font-medium px-1">
-        낙폭 (Drawdown)
+      <span className="text-xs text-(--color-text-secondary) font-medium px-1">
+        {t("drawdown.title")}
       </span>
       <div
         ref={containerRef}
-        className="w-full h-36 rounded-xl overflow-hidden bg-[var(--color-bg-elevated)] border border-[var(--color-border-subtle)]"
+        className="w-full h-36 rounded-xl overflow-hidden bg-(--color-bg-elevated) border border-(--color-border-subtle)"
       />
     </div>
   );

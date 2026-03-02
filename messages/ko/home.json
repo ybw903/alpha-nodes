@@ -1,0 +1,31 @@
+{
+  "meta": {
+    "title": "AlphaNodes — 노코드 백테스팅",
+    "description": "코드 없이 블록 드래그앤드롭으로 매매 전략을 구성하고 백테스트하세요."
+  },
+  "header": {
+    "startButton": "시작하기"
+  },
+  "hero": {
+    "badge": "Phase 1 · Mock 데이터 기반",
+    "headline1": "코드 없이 만드는",
+    "headline2": "매매 전략 백테스터",
+    "description": "블록을 드래그하고 연결하는 것만으로 SMA 교차, RSI 과매도 전략 등을 구성하고 즉시 백테스트 결과를 확인하세요.",
+    "cta": "전략 빌더 열기"
+  },
+  "features": {
+    "dragAndDrop": {
+      "title": "블록 드래그앤드롭",
+      "description": "코드 없이 SMA, RSI, MACD 등 지표 블록을 조합하여 전략을 시각적으로 구성하세요."
+    },
+    "accurateBacktest": {
+      "title": "정확한 백테스트",
+      "description": "수수료·슬리피지를 반영한 현실적인 시뮬레이션으로 전략의 실제 성과를 확인하세요."
+    },
+    "analytics": {
+      "title": "성과 분석",
+      "description": "MDD, 샤프 지수, 승률, 손익비 등 핵심 지표와 자산 곡선 차트를 한눈에 확인하세요."
+    }
+  },
+  "footer": "AlphaNodes · 노코드 백테스팅 플랫폼"
+}

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
 import type { AssetSearchResult } from '@/types/api';
 
 interface AssetSearchProps {
@@ -21,6 +22,7 @@ function useDebounce(value: string, delay: number): string {
 }
 
 export function AssetSearch({ assetClass, value, onChange, placeholder }: AssetSearchProps) {
+  const t = useTranslations('runPanel');
   const [inputValue, setInputValue] = useState(value);
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -66,7 +68,6 @@ export function AssetSearch({ assetClass, value, onChange, placeholder }: AssetS
   );
 
   const hasQuery = open && debouncedQuery.trim().length >= 1;
-  // 디바운스 대기 중(inputValue ≠ debouncedQuery)이거나 실제 fetching 중일 때 로딩 표시
   const isLoading = hasQuery && (inputValue.trim() !== debouncedQuery.trim() || isFetching);
   const showResults = hasQuery && !isLoading && results.length > 0;
   const showEmpty = hasQuery && !isLoading && isSuccess && results.length === 0;
@@ -83,7 +84,7 @@ export function AssetSearch({ assetClass, value, onChange, placeholder }: AssetS
             setOpen(true);
           }}
           onFocus={() => setOpen(true)}
-          placeholder={placeholder ?? '심볼 또는 종목명 검색'}
+          placeholder={placeholder ?? t('search.placeholder')}
           className="w-full bg-(--color-bg-elevated) border border-(--color-border-default) rounded-md px-2 py-1.5 pr-6 text-xs text-foreground focus:outline-none focus:border-(--color-accent) transition-colors font-mono"
         />
         {isLoading && (
@@ -95,7 +96,7 @@ export function AssetSearch({ assetClass, value, onChange, placeholder }: AssetS
         <ul className="absolute z-50 top-full left-0 right-0 mt-1 rounded-md border border-(--color-border-default) bg-(--color-bg-surface) shadow-xl overflow-hidden">
           {isLoading ? (
             <li className="px-3 py-2.5 text-[11px] text-(--color-text-muted) text-center">
-              검색 중...
+              {t('search.loading')}
             </li>
           ) : showResults ? (
             results.map((item) => (
@@ -119,7 +120,7 @@ export function AssetSearch({ assetClass, value, onChange, placeholder }: AssetS
             ))
           ) : (
             <li className="px-3 py-2.5 text-[11px] text-(--color-text-muted) text-center">
-              검색 결과가 없습니다
+              {t('search.empty')}
             </li>
           )}
         </ul>
