@@ -20,7 +20,7 @@ export default function ResultsPage() {
 
   useEffect(() => {
     if (!result) {
-      router.replace("/builder");
+      router.replace("/");
     }
   }, [result, router]);
 
@@ -52,7 +52,7 @@ export default function ResultsPage() {
       <header className="sticky top-0 z-10 border-b border-[var(--color-border-subtle)] bg-[var(--color-bg-surface)]/95 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-6 h-13 flex items-center gap-4">
           <Link
-            href="/builder"
+            href="/"
             className="text-sm text-[var(--color-accent)] font-bold hover:text-[var(--color-accent-hover)] transition-colors"
           >
             AlphaNodes
@@ -66,7 +66,7 @@ export default function ResultsPage() {
           </span>
           <div className="flex-1" />
           <Link
-            href="/builder"
+            href="/"
             className="px-4 py-1.5 text-xs font-semibold rounded-md bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white transition-colors"
           >
             {t("editStrategy")}
