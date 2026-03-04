@@ -51,8 +51,8 @@ importers:
         specifier: ^3.1.0
         version: 3.1.0
       yahoo-finance2:
-        specifier: ^3.13.0
-        version: 3.13.0
+        specifier: ^3.13.2
+        version: 3.13.2
       zod:
         specifier: ^4.3.6
         version: 4.3.6
@@ -3121,8 +3121,8 @@ packages:
     resolution: {integrity: sha512-BN22B5eaMMI9UMtjrGd5g5eCYPpCPDUy0FJXbYsaT5zYxjFOckS53SQDE3pWkVoWpHXVb3BrYcEN4Twa55B5cA==}
     engines: {node: '>=0.10.0'}
 
-  yahoo-finance2@3.13.0:
-    resolution: {integrity: sha512-czBj2q/MD68YEsB7aXNnGhJvWxYZn01O5r/i7VYiQV2m2sWwhca6tKgjwf/LT7zHHEVxhKNiGLB46glLnmq9Ag==}
+  yahoo-finance2@3.13.2:
+    resolution: {integrity: sha512-aAOJEjuLClfDxVPRKxjcwFoyzMr8BE/svgUqr5IjnQR+kppYbKO92Wl3SbAGz5DRghy6FiUfqi5FBDSBA/e2jg==}
     engines: {node: '>=20.0.0'}
     hasBin: true
 
@@ -6289,7 +6289,7 @@ snapshots:
 
   word-wrap@1.2.5: {}
 
-  yahoo-finance2@3.13.0:
+  yahoo-finance2@3.13.2:
     dependencies:
       '@deno/shim-deno': 0.18.2
       fetch-mock-cache: 2.3.1
