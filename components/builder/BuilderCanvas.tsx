@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import {
   ReactFlow,
   Background,
@@ -50,7 +50,8 @@ const ACTION_TYPES = new Set(["BUY", "SELL"]);
 function getNodeCategory(blockType: BlockType): BlockCategory {
   if (INDICATOR_TYPES.has(blockType)) return "indicator";
   if (CONDITION_TYPES.has(blockType)) {
-    if (blockType === "AND" || blockType === "OR" || blockType === "NOT") return "logic";
+    if (blockType === "AND" || blockType === "OR" || blockType === "NOT")
+      return "logic";
     return "condition";
   }
   if (ACTION_TYPES.has(blockType)) return "action";
@@ -80,8 +81,36 @@ export function BuilderCanvas() {
     onConnect,
     addNode,
     setSelectedNodeId,
+    copySelectedNodes,
+    pasteNodes,
+    undo,
   } = useBuilderStore();
   const { setRightPanelMode } = useUIStore();
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      if (
+        target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA" ||
+        target.isContentEditable
+      )
+        return;
+      const isMod = e.metaKey || e.ctrlKey;
+      if (isMod && e.key === "c") {
+        e.preventDefault();
+        copySelectedNodes();
+      } else if (isMod && e.key === "v") {
+        e.preventDefault();
+        pasteNodes();
+      } else if (isMod && e.key === "z") {
+        e.preventDefault();
+        undo();
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [copySelectedNodes, pasteNodes, undo]);
 
   const onNodeClick: NodeMouseHandler = useCallback(
     (_e, node) => {
@@ -161,7 +190,7 @@ export function BuilderCanvas() {
         onDrop={onDrop}
         onDragOver={onDragOver}
         fitView
-        className="bg-[var(--color-bg-base)]"
+        className="bg-background"
         defaultEdgeOptions={{
           style: { strokeWidth: 1.5, stroke: "var(--color-border-strong)" },
           animated: false,
