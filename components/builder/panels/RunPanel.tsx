@@ -8,6 +8,7 @@ import { useBuilderStore } from "@/lib/store/builderStore";
 import { useBacktestStore } from "@/lib/store/backtestStore";
 import { useModal } from "@/hooks/useModal";
 import { AssetSearch } from "@/components/builder/AssetSearch";
+import { DatePicker } from "@/components/ui/DatePicker";
 import type { Strategy, AssetClass, Timeframe } from "@/types/strategy";
 import type { BacktestRequest } from "@/types/backtest";
 
@@ -29,19 +30,31 @@ export function RunPanel() {
 
   const { assetClass, timeframe, symbol } = runConfig;
 
-  const assetClassOptions: { value: AssetClass; label: string; placeholder: string }[] = [
-    { value: "STOCK", label: t("assetClass.STOCK"), placeholder: "AAPL / 005930.KS" },
+  const assetClassOptions: {
+    value: AssetClass;
+    label: string;
+    placeholder: string;
+  }[] = [
+    {
+      value: "STOCK",
+      label: t("assetClass.STOCK"),
+      placeholder: "AAPL / 005930.KS",
+    },
     { value: "CRYPTO", label: t("assetClass.CRYPTO"), placeholder: "BTCUSDT" },
   ];
 
-  const timeframeOptions: { value: Timeframe; label: string; disabled?: boolean }[] = [
+  const timeframeOptions: {
+    value: Timeframe;
+    label: string;
+    disabled?: boolean;
+  }[] = [
     { value: "15m", label: t("timeframe.15m") },
     { value: "30m", label: t("timeframe.30m") },
-    { value: "1h",  label: t("timeframe.1h") },
-    { value: "4h",  label: t("timeframe.4h"), disabled: assetClass === "STOCK" },
-    { value: "1d",  label: t("timeframe.1d") },
-    { value: "1w",  label: t("timeframe.1w") },
-    { value: "1m",  label: t("timeframe.1m") },
+    { value: "1h", label: t("timeframe.1h") },
+    { value: "4h", label: t("timeframe.4h"), disabled: assetClass === "STOCK" },
+    { value: "1d", label: t("timeframe.1d") },
+    { value: "1w", label: t("timeframe.1w") },
+    { value: "1m", label: t("timeframe.1m") },
   ];
 
   const handleAssetClassChange = (ac: AssetClass) => {
@@ -52,13 +65,15 @@ export function RunPanel() {
     (sym: string) => {
       patchRunConfig({ symbol: sym });
     },
-    [patchRunConfig],
+    [patchRunConfig]
   );
 
   const {
     register,
     handleSubmit,
     formState: { errors },
+    setValue,
+    watch,
   } = useForm<RunFormValues>({
     defaultValues: {
       from: runConfig.from,
@@ -193,7 +208,9 @@ export function RunPanel() {
                 key={opt.value}
                 type="button"
                 disabled={opt.disabled}
-                onClick={() => !opt.disabled && patchRunConfig({ timeframe: opt.value })}
+                onClick={() =>
+                  !opt.disabled && patchRunConfig({ timeframe: opt.value })
+                }
                 className={`w-[calc(100%/4)] py-1.5 text-xs font-medium transition-colors border-r border-(--color-border-default) last:border-r-0 ${
                   timeframe === opt.value
                     ? "bg-(--color-accent) text-white"
@@ -204,42 +221,49 @@ export function RunPanel() {
               </button>
             ))}
           </div>
-          {assetClass === "STOCK" && (timeframe === "15m" || timeframe === "30m") && (
-            <p className="text-[11px] text-amber-400">{t("intradayWarning.days60")}</p>
-          )}
+          {assetClass === "STOCK" &&
+            (timeframe === "15m" || timeframe === "30m") && (
+              <p className="text-[11px] text-amber-400">
+                {t("intradayWarning.days60")}
+              </p>
+            )}
           {assetClass === "STOCK" && timeframe === "1h" && (
-            <p className="text-[11px] text-amber-400">{t("intradayWarning.days730")}</p>
+            <p className="text-[11px] text-amber-400">
+              {t("intradayWarning.days730")}
+            </p>
           )}
         </div>
 
         {/* Date range */}
+        <input type="hidden" {...register("from", { required: true })} />
+        <input type="hidden" {...register("to", { required: true })} />
         <div className="flex gap-2">
-          <label className="flex flex-col gap-1 flex-1">
+          <div className="flex flex-col gap-1 flex-1">
             <span className="text-[11px] font-medium text-[var(--color-text-secondary)]">
               {t("fields.startDate")}
             </span>
-            <input
-              type="date"
-              {...register("from", {
-                required: true,
-                onChange: (e) => patchRunConfig({ from: e.target.value }),
-              })}
-              className="w-full bg-[var(--color-bg-elevated)] border border-[var(--color-border-default)] rounded-md px-2 py-1.5 text-xs text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-accent)] transition-colors"
+            <DatePicker
+              value={watch("from")}
+              onChange={(v) => {
+                setValue("from", v, { shouldValidate: true });
+                patchRunConfig({ from: v });
+              }}
+              align="right"
             />
-          </label>
-          <label className="flex flex-col gap-1 flex-1">
+          </div>
+          <div className="flex flex-col gap-1 flex-1">
             <span className="text-[11px] font-medium text-[var(--color-text-secondary)]">
               {t("fields.endDate")}
             </span>
-            <input
-              type="date"
-              {...register("to", {
-                required: true,
-                onChange: (e) => patchRunConfig({ to: e.target.value }),
-              })}
-              className="w-full bg-[var(--color-bg-elevated)] border border-[var(--color-border-default)] rounded-md px-2 py-1.5 text-xs text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-accent)] transition-colors"
+            <DatePicker
+              value={watch("to")}
+              onChange={(v) => {
+                setValue("to", v, { shouldValidate: true });
+                patchRunConfig({ to: v });
+              }}
+              align="right"
             />
-          </label>
+          </div>
         </div>
 
         {/* Capital */}
