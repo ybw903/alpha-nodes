@@ -188,6 +188,17 @@ SMA(5)  ─┐
 SMA(20) ─┘
 ```
 
+### Keyboard Shortcuts
+
+| Shortcut | Action |
+|---|---|
+| `Ctrl / Cmd + C` | Copy selected node(s) |
+| `Ctrl / Cmd + V` | Paste — each paste offsets by +20px from the previous |
+| `Ctrl / Cmd + Z` | Undo last action (node add/delete, edge add/delete, paste) |
+| `Delete / Backspace` | Delete selected node(s) or edge(s) |
+
+Shortcuts are disabled when focus is inside a text input field.
+
 ### 2. Run a Backtest
 
 Select the **Run** tab in the right panel and configure:
